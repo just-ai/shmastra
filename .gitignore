@@ -1,0 +1,14 @@
+output.txt
+node_modules
+dist
+files
+.mastra
+.storage
+.idea
+.env.development
+.env
+*.db
+*.db-*
+.netlify
+.vercel
+.DS_Store
