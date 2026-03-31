@@ -13,7 +13,7 @@ export const createMastra = async (config: Config) => {
     config = {
       ...config,
       server: {
-        studioBase: config.server?.studioBase || process.env.MASTRA_STUDIO_BASE || undefined,
+        studioBase: config.server?.studioBase || process.env.MASTRA_STUDIO_BASE_PATH || undefined,
         apiPrefix: config.server?.apiPrefix || process.env.MASTRA_API_PREFIX || undefined,
         port: isDryRun ? undefined : (config.server?.port || port),
       }
