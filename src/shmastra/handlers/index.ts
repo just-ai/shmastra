@@ -12,6 +12,7 @@ import {handleStream} from "./stream";
 import {detectPublicUrl} from "./public-url";
 import {chatHandler} from "./chat";
 import {toolkitAuthHandler, toolkitAuthLinkHandler} from "./connections";
+import {healthHandler} from "./health";
 import {Middleware} from "../../mastra/middleware";
 
 export function withShmastraMiddlewares(config: Config): Middleware[] {
@@ -38,6 +39,11 @@ export async function withShmastraRoutes(config: Config): Promise<ApiRoute[]> {
       path: "/shmastra/public/:path{.+}",
       method: "GET",
       handler: staticHandler,
+    },
+    {
+      path: "/shmastra/api/health",
+      method: "GET",
+      handler: healthHandler,
     },
     {
       path: "/shmastra/api/thread",
