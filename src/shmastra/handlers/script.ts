@@ -8,7 +8,7 @@ const studioPaths = [
 ];
 
 function isStudioPath(path: string): boolean {
-    return studioPaths.some(p => path === p || path.includes(p + '/'));
+    return studioPaths.some(p => path === p || path.includes(p));
 }
 
 export const injectScript: Middleware = async (c, next) => {
