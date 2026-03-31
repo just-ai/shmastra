@@ -153,13 +153,8 @@ async function syncNodeModules(src: string, dst: string): Promise<void> {
             // Preserve symlinks (common with pnpm)
             ops.push(syncSymlink(srcPkg, dstPkg))
         } else if (lstat.isDirectory()) {
-            if (pkg.startsWith('@')) {
-                // Scoped package — sync its children individually
-                ops.push(syncNodeModules(srcPkg, dstPkg))
-            } else if (!fs.existsSync(dstPkg)) {
-                // Copy package dir only if not yet in dst
-                ops.push(fs.promises.cp(srcPkg, dstPkg, { recursive: true }))
-            }
+            // Always recurse into directories (including .pnpm) so new packages are synced
+            ops.push(syncNodeModules(srcPkg, dstPkg))
         } else {
             // Files (e.g. .package-lock.json) — sync with hash comparison
             ops.push(syncFile(srcPkg, dstPkg))
