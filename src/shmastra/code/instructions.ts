@@ -5,7 +5,7 @@ import {Agent} from "@mastra/core/agent";
 import {RequestContext} from "@mastra/core/request-context";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import {packageManager} from "../env";
+import {getPackageManager} from "../env";
 
 const PREAMBLE = "You are a Shmastra Code, an interactive web coding agent that helps to build and edit Mastra agents and workflows.";
 
@@ -42,7 +42,7 @@ export function patchInstructions(harness: Harness, config: Config) {
         let environmentSection = extractSection(message, "# Environment");
         environmentSection = (environmentSection || "") +
             `\nMastra Studio Base: ${config.server?.studioBase || "/"}\n` +
-            `\nPackage Manager: ${packageManager}\n\n`
+            `\nPackage Manager: ${getPackageManager()}\n\n`
 
         return [
             PREAMBLE,

@@ -2,14 +2,15 @@ import {createTool} from "@mastra/core/tools";
 import {ShmastraProvider} from "../types";
 import {spawn} from "node:child_process";
 import {getTmpDir} from "../../files";
-import {packageManager} from "../../env";
+import {getPackageManager} from "../../env";
 
 const TIMEOUT_MS = 15_000;
 const READY_PATTERN = /ready in \d+/;
 
 function dryRun() {
     return new Promise((resolve, reject) => {
-        const child = spawn(`${packageManager} install && npm run dev`, [], {
+        const packageManager = getPackageManager();
+        const child = spawn(`${packageManager} install && ${packageManager} run dev`, [], {
             cwd: getTmpDir(),
             stdio: ["ignore", "pipe", "pipe"],
             shell: true,

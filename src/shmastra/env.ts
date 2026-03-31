@@ -9,14 +9,18 @@ export const envPath = path.resolve(__dirname, '../../.env')
 export const isDevMode = process.env.NODE_ENV === "development";
 export const isDryRun = process.env.DRY_RUN === "true";
 
-export const packageManager = (() => {
-    try {
-        execSync("pnpm --version", {stdio: "ignore"});
-        return "pnpm";
-    } catch {
-        return "npm";
+let _packageManager: string | undefined;
+export function getPackageManager(): string {
+    if (!_packageManager) {
+        try {
+            execSync("pnpm --version", {stdio: "ignore"});
+            _packageManager = "pnpm";
+        } catch {
+            _packageManager = "npm";
+        }
     }
-})();
+    return _packageManager;
+}
 
 export function parseEnv(): Record<string, string> {
     if (!existsSync(envPath)) return {}
