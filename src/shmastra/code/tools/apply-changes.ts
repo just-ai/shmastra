@@ -7,10 +7,9 @@ import {getPackageManager} from "../../env";
 const TIMEOUT_MS = 15_000;
 const READY_PATTERN = /ready in \d+/;
 
-function dryRun() {
+function runCommand(command: string, timeoutMs: number, successPattern?: RegExp): Promise<string> {
     return new Promise((resolve, reject) => {
-        const packageManager = getPackageManager();
-        const child = spawn(`${packageManager} install && ${packageManager} run dev`, [], {
+        const child = spawn(command, [], {
             cwd: getTmpDir(),
             stdio: ["ignore", "pipe", "pipe"],
             shell: true,
@@ -22,32 +21,45 @@ function dryRun() {
         });
 
         let output = "";
+        let settled = false;
 
-        const onData = (chunk: Buffer)=> {
+        const settle = (fn: (value: string) => void, value: string) => {
+            if (settled) return;
+            settled = true;
+            child.kill("SIGTERM");
+            fn(value);
+        };
+
+        const onData = (chunk: Buffer) => {
             const text = chunk.toString();
             output += text;
 
-            if (READY_PATTERN.test(output)) {
-                child.kill("SIGTERM");
-                resolve(output);
+            if (successPattern?.test(output)) {
+                settle(resolve, output);
             }
-        }
+        };
 
         child.stdout.on("data", onData);
         child.stderr.on("data", onData);
 
         child.on("close", (code) => {
-            if (code !== 0) {
+            if (settled) return;
+            if (code === 0) {
+                settle(resolve, output);
+            } else {
                 console.error(output);
-                reject(output);
+                settle(reject, output);
             }
         });
 
-        setTimeout(() => {
-            child.kill("SIGTERM");
-            reject(output);
-        }, TIMEOUT_MS);
+        setTimeout(() => settle(reject, output), timeoutMs);
     });
+}
+
+async function dryRun() {
+    const packageManager = getPackageManager();
+    await runCommand(`${packageManager} install`, TIMEOUT_MS);
+    await runCommand(`${packageManager} run dev`, TIMEOUT_MS, READY_PATTERN);
 }
 
 export const createApplyChangesTool = (provider: ShmastraProvider) =>
