@@ -4,7 +4,7 @@ import {spawn} from "node:child_process";
 import {getTmpDir} from "../../files";
 import {getPackageManager} from "../../env";
 
-const TIMEOUT_MS = 15_000;
+const TIMEOUT_MS = 30_000;
 const READY_PATTERN = /ready in \d+/;
 
 function runCommand(command: string, timeoutMs: number, successPattern?: RegExp): Promise<string> {
