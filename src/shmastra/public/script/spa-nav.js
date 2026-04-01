@@ -1,5 +1,5 @@
 (function () {
-    const SPA_PATTERN = /^\/(agents|workflows)\//;
+    const SPA_PATTERN = /\/(agents|workflows)\//;
 
     document.addEventListener('click', (e) => {
         const a = e.composedPath().find((el) => el instanceof HTMLAnchorElement);
