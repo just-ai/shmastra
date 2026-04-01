@@ -43,17 +43,37 @@ async function getConnectedToolkits() {
 }
 
 async function searchTools(query: string) {
-    if (!isConnected()) return [];
+    if (!isConnected()) {
+        console.error("Composio could not be connected");
+        return [];
+    }
     const session = await getSession();
-    if (!session) return [];
+    if (!session) {
+        console.error("Composio session cannot be created");
+        return [];
+    }
+
     try {
         const c = requireComposio();
-        const [searchResult, toolkitsResult, allToolkits] = await Promise.all([
-            session.search({ query }),
+        const s = session as any;
+        const [rawSearchResult, toolkitsResult, allToolkits] = await Promise.all([
+            s.client.toolRouter.session.search(s.sessionId, {
+                queries: [{ use_case: query }],
+            }),
             session.toolkits(),
             c.toolkits.get({}),
         ]);
-        if (!searchResult.success) return [];
+        const searchResult = {
+            success: rawSearchResult.success as boolean,
+            results: (rawSearchResult.results as any[]).map((r: any) => ({
+                primaryToolSlugs: r.primary_tool_slugs as string[],
+                toolkits: r.toolkits as string[],
+            })),
+        };
+        if (!searchResult.success) {
+            console.log(rawSearchResult);
+            return [];
+        }
         const oauthSlugs = new Set(
             allToolkits
                 .filter(t => t.authSchemes?.some(s => s.startsWith("OAUTH")))
@@ -73,7 +93,8 @@ async function searchTools(query: string) {
                     connected: r.toolkits.some(t => connectedSlugs.has(t)),
                 }))
             );
-    } catch {
+    } catch (error) {
+        console.error(JSON.stringify(error, null, 2));
         return [];
     }
 }

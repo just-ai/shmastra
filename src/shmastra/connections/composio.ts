@@ -24,7 +24,9 @@ function init(): void {
         return;
     }
     try {
-        composio = new Composio({ provider: new MastraProvider() });
+        composio = new Composio({
+            provider: new MastraProvider()
+        });
     } catch (error) {
         console.error("Composio cannot be configured", error);
     }
