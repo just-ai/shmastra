@@ -8,7 +8,8 @@
     "dev": "mastra dev",
     "build": "mastra build",
     "start": "mastra start",
-    "postinstall": "node scripts/install-markitdown.mjs"
+    "postinstall": "node scripts/install-markitdown.mjs",
+    "init-workdir": "npx tsx scripts/init-workdir.ts"
   },
   "keywords": [],
   "author": "",
