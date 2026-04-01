@@ -58,7 +58,7 @@ function runCommand(command: string, timeoutMs: number, successPattern?: RegExp)
 
 async function dryRun() {
     const packageManager = getPackageManager();
-    await runCommand(`${packageManager} install`, TIMEOUT_MS);
+    await runCommand(`${packageManager} install --ignore-scripts`, TIMEOUT_MS);
     await runCommand(`${packageManager} run dev`, TIMEOUT_MS, READY_PATTERN);
 }
 
