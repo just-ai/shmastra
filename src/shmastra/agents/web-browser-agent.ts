@@ -19,25 +19,25 @@ function resolveChromiumPath(): string | undefined {
             : join(home, ".cache", "ms-playwright");
 
     const executable = platform === "win32"
-        ? join("chrome-win", "chrome.exe")
+        ? join("chrome-headless-shell-win64", "chrome-headless-shell.exe")
         : platform === "darwin"
-            ? join("chrome-mac", "Chromium.app", "Contents", "MacOS", "Chromium")
-            : join("chrome-linux", "chrome");
+            ? join("chrome-headless-shell-mac-arm64", "chrome-headless-shell")
+            : join("chrome-headless-shell-linux64", "chrome-headless-shell");
 
     try {
-        const chromiumDir = readdirSync(cacheDir).find(d => d.startsWith("chromium-"));
-        if (chromiumDir) {
-            return join(cacheDir, chromiumDir, executable);
+        const shellDir = readdirSync(cacheDir).find(d => d.startsWith("chromium_headless_shell-"));
+        if (shellDir) {
+            return join(cacheDir, shellDir, executable);
         }
     } catch {
         // cache dir not found
     }
 
     try {
-        execSync("npx playwright install chromium", {stdio: "inherit"});
-        const chromiumDir = readdirSync(cacheDir).find(d => d.startsWith("chromium-"));
-        if (chromiumDir) {
-            return join(cacheDir, chromiumDir, executable);
+        execSync("npx -y playwright@1.57.0 install chromium-headless-shell", {stdio: "inherit"});
+        const shellDir = readdirSync(cacheDir).find(d => d.startsWith("chromium_headless_shell-"));
+        if (shellDir) {
+            return join(cacheDir, shellDir, executable);
         }
     } catch {
         // installation failed, let playwright handle it at runtime
