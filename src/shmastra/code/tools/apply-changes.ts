@@ -5,14 +5,13 @@ import {getTmpDir} from "../../files";
 import {getPackageManager} from "../../env";
 
 const TIMEOUT_MS = 30_000;
-const READY_PATTERN = /ready in \d+/;
+const READY_PATTERN = /watching for file changes/;
 
-function runCommand(command: string, timeoutMs: number, successPattern?: RegExp): Promise<string> {
+function runCommand(command: string, args: string[], timeoutMs: number, successPattern?: RegExp): Promise<string> {
     return new Promise((resolve, reject) => {
-        const child = spawn(command, [], {
+        const child = spawn(command, args, {
             cwd: getTmpDir(),
             stdio: ["ignore", "pipe", "pipe"],
-            shell: true,
             env: {
                 ...process.env,
                 DRY_RUN: "true",
@@ -47,7 +46,6 @@ function runCommand(command: string, timeoutMs: number, successPattern?: RegExp)
             if (code === 0) {
                 settle(resolve, output);
             } else {
-                console.error(output);
                 settle(reject, output);
             }
         });
@@ -57,9 +55,9 @@ function runCommand(command: string, timeoutMs: number, successPattern?: RegExp)
 }
 
 async function dryRun() {
-    const packageManager = getPackageManager();
-    await runCommand(`${packageManager} install --ignore-scripts`, TIMEOUT_MS);
-    await runCommand(`${packageManager} run dev`, TIMEOUT_MS, READY_PATTERN);
+    const pm = getPackageManager();
+    await runCommand(pm, ["install", "--ignore-scripts"], TIMEOUT_MS);
+    await runCommand(pm, ["run", "dev"], TIMEOUT_MS, READY_PATTERN);
 }
 
 export const createApplyChangesTool = (provider: ShmastraProvider) =>
