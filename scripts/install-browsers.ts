@@ -1,40 +1,33 @@
 import { execSync } from "child_process";
 import { join } from "path";
-import { existsSync, readdirSync } from "fs";
+import { readdirSync } from "fs";
+import { homedir } from "os";
 
-// Get global node_modules path where @executeautomation/playwright-mcp-server is installed
-const globalRoot = execSync("npm root -g", { encoding: "utf-8" }).trim();
-const mcpServerDir = join(globalRoot, "@executeautomation/playwright-mcp-server");
+const home = homedir();
+const cacheDir = process.platform === "win32"
+    ? join(process.env.USERPROFILE ?? home, "AppData", "Local", "ms-playwright")
+    : process.platform === "darwin"
+        ? join(home, "Library", "Caches", "ms-playwright")
+        : join(home, ".cache", "ms-playwright");
 
-console.log(`Global node_modules: ${globalRoot}`);
-console.log(`MCP server dir exists: ${existsSync(mcpServerDir)}`);
-
-if (existsSync(mcpServerDir)) {
-    const hasNestedModules = existsSync(join(mcpServerDir, "node_modules"));
-    console.log(`MCP server has nested node_modules: ${hasNestedModules}`);
-    if (hasNestedModules) {
-        console.log(`Nested modules:`, readdirSync(join(mcpServerDir, "node_modules")).filter(d => d.includes("playwright")).join(", "));
+// Check if chromium is already installed
+try {
+    if (readdirSync(cacheDir).some(d => d.startsWith("chromium-"))) {
+        console.log("Chromium already installed in", cacheDir);
+        process.exit(0);
     }
-    // Check if playwright-core is hoisted to global root
-    const hoisted = existsSync(join(globalRoot, "playwright-core"));
-    console.log(`playwright-core hoisted to global root: ${hoisted}`);
+} catch {
+    // cache dir not found, need to install
 }
 
-// Try to find playwright-core CLI in all possible locations
-const candidates = [
-    join(mcpServerDir, "node_modules", "playwright-core", "cli.js"),
-    join(globalRoot, "playwright-core", "cli.js"),
-    join(mcpServerDir, "node_modules", "playwright", "node_modules", "playwright-core", "cli.js"),
-    join(globalRoot, "playwright", "node_modules", "playwright-core", "cli.js"),
-];
+console.log("Installing Chromium browser...");
+execSync("npx playwright install chromium", { stdio: "inherit" });
 
-const playwrightCli = candidates.find(p => existsSync(p));
-
-if (!playwrightCli) {
-    console.error("Playwright CLI not found in any of:");
-    candidates.forEach(c => console.error(`  ${c} (exists: ${existsSync(c)})`));
+// Verify
+const installed = readdirSync(cacheDir).find(d => d.startsWith("chromium-"));
+if (installed) {
+    console.log("Chromium installed:", join(cacheDir, installed));
+} else {
+    console.error("Chromium not found after installation in", cacheDir);
     process.exit(1);
 }
-
-console.log(`Using Playwright CLI: ${playwrightCli}`);
-execSync(`node ${playwrightCli} install --with-deps chromium`, { stdio: "inherit" });
