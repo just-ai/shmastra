@@ -5,7 +5,8 @@ import {execSync} from "node:child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-export const envPath = path.resolve(__dirname, '../../.env')
+export const envPath = path.resolve(__dirname, '../../.env');
+export const sandboxId = process.env.E2B_SANDBOX_ID;
 export const isDevMode = process.env.NODE_ENV === "development";
 export const isDryRun = process.env.DRY_RUN === "true";
 
@@ -20,6 +21,18 @@ export function getPackageManager(): string {
         }
     }
     return _packageManager;
+}
+
+let _publicUrl = process.env.PUBLIC_URL;
+export async function getPublicUrl() {
+    if (!_publicUrl && process.env.PUBLIC_URL) {
+        _publicUrl = process.env.PUBLIC_URL;
+    } else if (!_publicUrl && sandboxId) {
+        const {mastra} = await import("../mastra");
+        const port = mastra.getServer()?.port ?? process.env.PORT ?? 4111;
+        _publicUrl = `https://${port}-${process.env.E2B_SANDBOX_ID}.e2b.app`;
+    }
+    return _publicUrl;
 }
 
 export function parseEnv(): Record<string, string> {

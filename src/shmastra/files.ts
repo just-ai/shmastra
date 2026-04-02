@@ -1,6 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import * as os from 'node:os'
+import {getPublicUrl} from "./env";
 
 // Items never copied to tmp (always excluded from sync)
 const SKIP_COPY = new Set(['README.md', 'AGENTS.md', 'CLAUDE.md', '.git', '.gitignore', '.claude'])
@@ -22,7 +23,7 @@ export async function resolveFileUrl(fileUrl: string, mimeType: string): Promise
     const fileName = fileMatch[1]
 
     // 1. PUBLIC_URL env
-    const publicUrl = process.env.PUBLIC_URL
+    const publicUrl = await getPublicUrl();
     if (publicUrl && isApiPath) {
         return `${publicUrl.replace(/\/$/, '')}/shmastra/api/files/${fileName}`
     }
