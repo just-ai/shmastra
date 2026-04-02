@@ -15,7 +15,9 @@
         document.head.appendChild(link);
 
         addScript('assistant-widget.iife.js', function () {
-            AssistantWidget.initAssistantWidget();
+            AssistantWidget.initAssistantWidget({
+                theme: 'dark'
+            });
         });
     }
 
