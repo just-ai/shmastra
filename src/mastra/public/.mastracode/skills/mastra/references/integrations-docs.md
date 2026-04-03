@@ -82,7 +82,7 @@ const mcp = new MCPClient({
 
 ### Getting tools for an agent
 
-After creating the client, retrieve the tools to inject into your agent:
+After creating the client, retrieve the tools to inject into your agent using `listTools()`:
 
 ```typescript
 const agent = new Agent({

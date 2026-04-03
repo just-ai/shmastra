@@ -297,6 +297,30 @@ export const testWorkflow = createWorkflow({})
 
 **IMPORTANT: only tools with both of input and output zod schemas can be used as step**
 
+### Agent memory in workflow
+
+If you explicitly call agent (in workflow for example), you have to pass thread and resource to memory option:
+
+```
+ const threadId = `summarize-${randomUUID()}`;
+ const response = await summarizerAgent.generate([
+   {
+     role: "user",
+     content: [
+       {
+         type: "text",
+         text: `Please summarize the following document`,
+       },
+     ],
+   },
+ ], {
+   memory: {
+     thread: threadId,
+     resource: "summarize-workflow",
+   },
+ });
+```
+
 ## When you see errors
 
 **Type errors often mean your knowledge is outdated.**
