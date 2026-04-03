@@ -12,6 +12,7 @@ function runCommand(command: string, args: string[], timeoutMs: number, successP
         const child = spawn(command, args, {
             cwd: getTmpDir(),
             stdio: ["ignore", "pipe", "pipe"],
+            detached: true,
             env: {
                 ...process.env,
                 DRY_RUN: "true",
@@ -25,7 +26,9 @@ function runCommand(command: string, args: string[], timeoutMs: number, successP
         const settle = (fn: (value: string) => void, value: string) => {
             if (settled) return;
             settled = true;
-            child.kill("SIGTERM");
+            try {
+                if (child.pid) process.kill(-child.pid, "SIGTERM");
+            } catch {}
             fn(value);
         };
 
