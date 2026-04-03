@@ -44,7 +44,7 @@ export function patchInstructions(harness: Harness, config: Config) {
         environmentSection = (environmentSection || "") +
             `\nMastra Studio Base: ${config.server?.studioBase || "/"}` +
             `\nMastra REST API prefix: ${config.server?.apiPrefix || "/api"}` +
-            (publicUrl ? `Public server URL: ${publicUrl}` : "") +
+            (publicUrl ? `\nPublic server URL: ${publicUrl}` : "") +
             `\nPackage Manager: ${getPackageManager()}\n\n`
 
         return [
