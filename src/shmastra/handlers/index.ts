@@ -33,6 +33,9 @@ export async function withShmastraRoutes(config: Config): Promise<ApiRoute[]> {
   const routes = config.server?.apiRoutes || [];
   const code: ShmastraCode = await createShmastraCode(config);
 
+  const apiPath = (path: string) =>
+      `${config.server?.apiPrefix || "/api"}${path}`;
+
   return [
     ...routes,
     {
@@ -91,13 +94,13 @@ export async function withShmastraRoutes(config: Config): Promise<ApiRoute[]> {
       handler: getFileHandler,
     },
     {
-      path: "/api/files",
+      path: apiPath("/files"),
       method: "POST",
       handler: uploadHandler,
       openapi: uploadOpenapi,
     },
     {
-      path: "/api/files/:fileName{.+}",
+      path: apiPath("/files/:fileName{.+}"),
       method: "GET",
       handler: getFileHandler,
       openapi: getFileOpenapi,
