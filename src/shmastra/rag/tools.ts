@@ -75,7 +75,7 @@ export const queryDocumentsTool = createTool({
                 const content: any[] = [];
 
                 if (isImageFile(file)) {
-                    const imageUrl = await resolveFileUrl(file, `image/${getFileExtension(file)}`);
+                    const imageUrl = await resolveFileUrl(file);
                     content.push({type: "image", image: imageUrl});
                 } else {
                     const markdown = await convertFileToMarkdown(file);

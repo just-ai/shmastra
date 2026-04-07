@@ -1,8 +1,20 @@
 import {resolveFileUrl} from "../files";
+import {getMastra} from "../utils";
 import {Middleware} from "../../mastra/middleware";
 
+let _streamPattern: RegExp | undefined;
+async function getStreamPattern() {
+    if (!_streamPattern) {
+        const mastra = await getMastra();
+        const prefix = mastra.getServer()?.apiPrefix || "/api";
+        _streamPattern = new RegExp(`^${prefix}/agents/[^/]+/stream$`);
+    }
+    return _streamPattern;
+}
+
 export const handleStream: Middleware = async (c, next) => {
-    if (c.req.method === 'POST' && /^\/api\/agents\/[^/]+\/stream$/.test(c.req.path)) {
+    const pattern = await getStreamPattern();
+    if (c.req.method === 'POST' && pattern.test(c.req.path)) {
         const body = await c.req.json()
 
         if (Array.isArray(body.messages)) {

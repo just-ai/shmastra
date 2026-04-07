@@ -1,9 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import {getUploadDir, getTmpDir, getLocalFilePath} from '../files'
+import {getUploadDir, getTmpDir, getLocalFilePath, createUniqueFileName} from '../files'
 import {Handler} from "hono";
-import {nanoid} from 'nanoid';
-import anyAscii from 'any-ascii';
 import mime from 'mime';
 import type {ApiRoute} from "@mastra/core/server";
 
@@ -16,9 +14,7 @@ export const uploadHandler: Handler = async c => {
         return c.json({ error: 'No file provided' }, 400);
     }
 
-    const ext = path.extname(file.name);
-    const base = path.basename(file.name, ext);
-    const fileName = `${anyAscii(base)}-${nanoid(8)}${ext}`;
+    const fileName = createUniqueFileName(file.name);
     const filePath = path.join(getUploadDir(), fileName);
     const writeStream = fs.createWriteStream(filePath);
     await new Promise<void>((resolve, reject) => {

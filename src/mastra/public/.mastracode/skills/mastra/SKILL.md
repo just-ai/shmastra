@@ -297,9 +297,9 @@ export const testWorkflow = createWorkflow({})
 
 **IMPORTANT: only tools with both of input and output zod schemas can be used as step**
 
-### Agent memory in workflow
+### How to call agent explicitly
 
-If you explicitly call agent (in workflow for example), you have to pass thread and resource to memory option:
+If you explicitly call agent's `generate()` (in workflow, or via Mastra client SDK, or Mastra API), you have to pass thread and resource to memory option:
 
 ```
  const threadId = `summarize-${randomUUID()}`;
@@ -320,6 +320,8 @@ If you explicitly call agent (in workflow for example), you have to pass thread 
    },
  });
 ```
+
+Pass suitable `thread` and `resource` for each explicit `generate()` call.
 
 ## When you see errors
 

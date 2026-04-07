@@ -1,3 +1,10 @@
+import type { Mastra } from "@mastra/core/mastra";
+
+export async function getMastra(): Promise<Mastra> {
+  const { mastra } = await import("../mastra");
+  return mastra;
+}
+
 export function deduplicateItemIds(messages: any[]): any[] {
   const itemIdCounts = new Map<string, number>();
   for (const message of messages) {

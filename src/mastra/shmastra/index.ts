@@ -74,6 +74,29 @@ export { createAgentMemory } from "../../shmastra/memory";
 export { createAgentTools } from "../../shmastra/tools";
 
 /**
+ * Function to add messaging channels like Telegram, Slack, etc to your agents.
+ * Use it as a wrapper around channels instead of passing channel adapters.
+ * You have to use suitable adapter factory from @chat-adapter
+ *
+ * ```
+ * import {createAgentChannels} from "../shmastra";
+ * import {createTelegramAdapter} from "@chat-adapter/telegram";
+ *
+ * export const myAgent = new Agent({
+ *    ...
+ *    channels: createAgentChannels({
+ *      adapters: {
+ *       telegram: createTelegramAdapter({
+ *         botToken: process.env.TEST_AGENT_TELEGRAM_BOT_TOKEN,
+ *       })
+ *     }
+ *    })
+ * }
+ * ```
+ */
+export { createAgentChannels } from "../../shmastra/channels";
+
+/**
  * Function to create workflow step from agent instance.
  * Use this function instead of mastra `createStep`.
  *

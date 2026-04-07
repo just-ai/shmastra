@@ -10,20 +10,20 @@ const port = parseInt(process.env.PORT || "4111");
 export const createMastra = async (config: Config) => {
   if (isDevMode) {
     await startShmastraWizard();
-    config = {
-      ...config,
-      server: {
-        studioBase: config.server?.studioBase || process.env.MASTRA_STUDIO_BASE_PATH || undefined,
-        apiPrefix: config.server?.apiPrefix || process.env.MASTRA_API_PREFIX || undefined,
-        port: isDryRun ? undefined : (config.server?.port || port),
-      }
-    };
-    config.server = {
-      ...config.server,
-      apiRoutes: await withShmastraRoutes(config),
-      middleware: withShmastraMiddlewares(config),
-    };
   }
+  config = {
+    ...config,
+    server: {
+      studioBase: config.server?.studioBase || process.env.MASTRA_STUDIO_BASE_PATH || undefined,
+      apiPrefix: config.server?.apiPrefix || process.env.MASTRA_API_PREFIX || undefined,
+      port: isDryRun ? undefined : (config.server?.port || port),
+    }
+  };
+  config.server = {
+    ...config.server,
+    apiRoutes: await withShmastraRoutes(config),
+    middleware: withShmastraMiddlewares(config),
+  };
   const mastra = new Mastra(config);
   patchMastra(mastra);
   return mastra;
