@@ -45,7 +45,7 @@ Use them when the agent should respond in Slack, Discord, Telegram, or other sup
 
 Adapters typically read credentials from environment variables; see each adapter’s docs for setup.
 
-## Project convention: wrap tools and channels
+## Use createAgentChannels to wrap channels
 
 Do **not** attach raw `channels` objects directly when defining agents in this codebase.
 

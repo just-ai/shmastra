@@ -21,6 +21,24 @@ Invoke **`ask_env_vars_safely`** with:
 | `MY_AGENT_SENDBLUE_WEBHOOK_SECRET` | password | no |
 | `MY_AGENT_SENDBLUE_STATUS_CALLBACK_URL` | text | no |
 
+## Init webhook
+
+**IMPORTANT: skip this step if there is no public server URL available in current environment**
+
+Sendblue webhooks cannot be registered automatically — provide the user with a manual instruction and the full webhook URL.
+
+Tell the user:
+
+1. The full webhook URL: `{public server URL}/api/agents/{agentId}/channels/sendblue/webhook`
+2. Go to Sendblue dashboard and point webhook URLs to this URL
+3. Set a webhook secret and provide it back — it will be stored as `MY_AGENT_SENDBLUE_WEBHOOK_SECRET`
+
+The adapter handles three webhook types: inbound messages, outbound status, and typing indicators.
+
+Replace `{public server URL}` with the actual public URL and `{agentId}` with the agent's id.
+
+**Do not use Mastra REST API prefix** — use path strictly: `/api/agents/{agentId}/channels/sendblue/webhook`.
+
 ## Example: `Agent` + `createAgentChannels`
 
 ```typescript

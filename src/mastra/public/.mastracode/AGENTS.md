@@ -44,13 +44,8 @@ IMPORTANT: **Mastra skill is already loaded** - do not read "mastra" skill again
 ## Resources
 
 - [Mastra Documentation](https://mastra.ai/llms.txt)
-- [Mastra .well-known skills discovery](https://mastra.ai/.well-known/skills/index.json)
 
 # IMPORTANT RULES
-
-## Security rules
-
-Never read `.env` file content - user should not have access to its content.
 
 ## Use absolute paths
 
@@ -118,3 +113,10 @@ Prefer `pnpm` over `npm` if it is available in the system to install new package
 
 If your agent or workflow needs to use any third-party API - prefer using MCP over hand-writen API implementation.
 Learn `.mastracode/skills/masrtra/references/integrations-docs.md` for details.
+
+### Webhook or longpolling
+
+If there is public server URL available in the current environment - prefer integration strategy using webhooks instead of long polling or persistent connections.
+To create webhook handler, you have to create custom API routes inside `src/mastra/routes` using `registerApiRoute()` from `@mastra/core/server` and register it in `src/mastra/routes/index.ts`.
+
+**Note that channels have its own webhook handlers built-in to channel package**, and you dont have to implement your handler to handle channels requests to agents.

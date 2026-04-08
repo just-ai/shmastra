@@ -21,6 +21,26 @@ Invoke **`ask_env_vars_safely`** with:
 | `MY_AGENT_WHATSAPP_VERIFY_TOKEN` | password | yes |
 | `MY_AGENT_WHATSAPP_BOT_USERNAME` | text | no |
 
+## Init webhook
+
+**IMPORTANT: skip this step if there is no public server URL available in current environment**
+
+WhatsApp webhooks cannot be registered automatically — provide the user with a manual instruction and the full webhook URL.
+
+Tell the user:
+
+1. The full webhook URL: `{public server URL}/api/agents/{agentId}/channels/whatsapp/webhook`
+2. Go to Meta Developer dashboard → **WhatsApp → Configuration**
+3. Set **Callback URL** to this webhook URL
+4. Set **Verify token** to match `MY_AGENT_WHATSAPP_VERIFY_TOKEN`
+5. Subscribe to the **messages** webhook field
+
+The adapter handles both GET (verification handshake) and POST (event delivery) automatically.
+
+Replace `{public server URL}` with the actual public URL and `{agentId}` with the agent's id.
+
+**Do not use Mastra REST API prefix** — use path strictly: `/api/agents/{agentId}/channels/whatsapp/webhook`.
+
 ## Example: `Agent` + `createAgentChannels`
 
 ```typescript

@@ -29,6 +29,25 @@ Invoke **`ask_env_vars_safely`** with:
 | `MY_AGENT_GITHUB_WEBHOOK_SECRET` | password | yes |
 | `MY_AGENT_GITHUB_BOT_USERNAME` | text | no |
 
+## Init webhook
+
+**IMPORTANT: skip this step if there is no public server URL available in current environment**
+
+GitHub webhooks cannot be registered automatically — provide the user with a manual instruction and the full webhook URL.
+
+Tell the user:
+
+1. The full webhook URL: `{public server URL}/api/agents/{agentId}/channels/github/webhook`
+2. Go to GitHub App settings or repo **Settings → Webhooks → Add webhook**
+3. Set **Payload URL** to this webhook URL
+4. Set **Content type** to `application/json`
+5. Set **Secret** to match `MY_AGENT_GITHUB_WEBHOOK_SECRET`
+6. Subscribe to events: **Issue comments**, **Pull request review comments**
+
+Replace `{public server URL}` with the actual public URL and `{agentId}` with the agent's id.
+
+**Do not use Mastra REST API prefix** — use path strictly: `/api/agents/{agentId}/channels/github/webhook`.
+
 ## Example: `Agent` + `createAgentChannels` (GitHub App)
 
 ```typescript

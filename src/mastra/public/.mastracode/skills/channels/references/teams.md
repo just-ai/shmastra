@@ -19,6 +19,23 @@ Invoke **`ask_env_vars_safely`** with:
 | `MY_AGENT_TEAMS_APP_PASSWORD` | password | yes |
 | `MY_AGENT_TEAMS_APP_TENANT_ID` | text | yes (SingleTenant) |
 
+## Init webhook
+
+**IMPORTANT: skip this step if there is no public server URL available in current environment**
+
+Teams webhooks cannot be registered automatically — provide the user with a manual instruction and the full webhook URL.
+
+Tell the user:
+
+1. The full webhook URL: `{public server URL}/api/agents/{agentId}/channels/teams/webhook`
+2. Go to Azure Bot resource → **Configuration**
+3. Set **Messaging endpoint** to this webhook URL
+4. Click **Apply**
+
+Replace `{public server URL}` with the actual public URL and `{agentId}` with the agent's id.
+
+**Do not use Mastra REST API prefix** — use path strictly: `/api/agents/{agentId}/channels/teams/webhook`.
+
 ## Example: `Agent` + `createAgentChannels`
 
 ```typescript

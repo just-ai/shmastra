@@ -20,6 +20,25 @@ Invoke **`ask_env_vars_safely`** with:
 | `MY_AGENT_ZERNIO_API_BASE_URL` | text | no |
 | `MY_AGENT_ZERNIO_BOT_NAME` | text | no |
 
+## Init webhook
+
+**IMPORTANT: skip this step if there is no public server URL available in current environment**
+
+Zernio webhooks cannot be registered automatically — provide the user with a manual instruction and the full webhook URL.
+
+Tell the user:
+
+1. The full webhook URL: `{public server URL}/api/agents/{agentId}/channels/zernio/webhook`
+2. Go to Zernio dashboard and create a webhook pointing to this URL
+3. Select events: **message.received**, **comment.received**
+4. Set a strong secret and provide it back — it will be stored as `MY_AGENT_ZERNIO_WEBHOOK_SECRET`
+
+Note: the inbox addon must be enabled on the Zernio account to receive message webhooks.
+
+Replace `{public server URL}` with the actual public URL and `{agentId}` with the agent's id.
+
+**Do not use Mastra REST API prefix** — use path strictly: `/api/agents/{agentId}/channels/zernio/webhook`.
+
 ## Example: `Agent` + `createAgentChannels`
 
 ```typescript

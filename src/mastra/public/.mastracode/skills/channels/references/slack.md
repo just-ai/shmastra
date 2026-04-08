@@ -27,6 +27,30 @@ Invoke **`ask_env_vars_safely`** with:
 | `MY_AGENT_SLACK_CLIENT_SECRET` | password | yes |
 | `MY_AGENT_SLACK_SIGNING_SECRET` | password | yes |
 
+## Init webhook
+
+**IMPORTANT: skip this step if there is no public server URL available in current environment**
+
+Slack webhooks cannot be registered automatically — provide the user with a manual instruction and the full webhook URL.
+
+Tell the user:
+
+1. The full webhook URL: `{public server URL}/api/agents/{agentId}/channels/slack/webhook`
+2. Go to [api.slack.com/apps](https://api.slack.com/apps) and open the app manifest
+3. Set both `event_subscriptions.request_url` and `interactivity.request_url` to this webhook URL:
+```yaml
+settings:
+  event_subscriptions:
+    request_url: <webhook URL>
+  interactivity:
+    is_enabled: true
+    request_url: <webhook URL>
+```
+
+Replace `{public server URL}` with the actual public URL and `{agentId}` with the agent's id.
+
+**Do not use Mastra REST API prefix** — use path strictly: `/api/agents/{agentId}/channels/slack/webhook`.
+
 ## Example: `Agent` + `createAgentChannels` (single workspace)
 
 ```typescript

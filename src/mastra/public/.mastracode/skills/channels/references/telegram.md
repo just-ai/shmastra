@@ -21,16 +21,17 @@ Pass values explicitly into the adapter — do not rely on unprefixed `TELEGRAM_
 
 ## Init webhook
 
-**IMPORTANT: skip this step if there is no public server URL in environment**
+**IMPORTANT: skip this step if there is no public server URL available in current environment**
 
- - If public server URL is not present - Telegram adapter will automatically start long-polling.
- - If public server URL is present in the environment, init Telegram bot webhook using envs from `.env` calling `execute_command` tool:
+Register webhook via Telegram Bot API using `execute_command` tool:
 
 ```shell
 set -a && . ./.env && set +a && curl -sS -X POST "https://api.telegram.org/bot${MY_AGENT_TELEGRAM_BOT_TOKEN}/setWebhook" -H "Content-Type: application/json" -d "{\"url\":\"{public server URL}/api/agents/{agentId}/channels/telegram/webhook\"}"
 ```
 
-**Do not use Mastra REST API prefix constructing Telegram webhook URL** - use this path strictly: `/api/agents/{agentId}/channels/telegram/webhook` replacing agentId with actual id of agent.
+Replace `{public server URL}` with the actual public URL and `{agentId}` with the agent's id.
+
+**Do not use Mastra REST API prefix** — use path strictly: `/api/agents/{agentId}/channels/telegram/webhook`.
 
 ## Add telegram adapter
 

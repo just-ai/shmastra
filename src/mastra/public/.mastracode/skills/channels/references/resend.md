@@ -20,6 +20,25 @@ Invoke **`ask_env_vars_safely`** with:
 | `MY_AGENT_RESEND_API_KEY` | password | yes |
 | `MY_AGENT_RESEND_WEBHOOK_SECRET` | password | yes |
 
+## Init webhook
+
+**IMPORTANT: skip this step if there is no public server URL available in current environment**
+
+Resend webhooks cannot be registered automatically — provide the user with a manual instruction and the full webhook URL.
+
+Tell the user:
+
+1. The full webhook URL: `{public server URL}/api/agents/{agentId}/channels/resend/webhook`
+2. Go to Resend dashboard → **Webhooks**
+3. Set webhook URL to this webhook URL
+4. Copy the **Signing secret** and provide it back — it will be stored as `MY_AGENT_RESEND_WEBHOOK_SECRET`
+
+The adapter handles inbound emails and threads them automatically via email headers.
+
+Replace `{public server URL}` with the actual public URL and `{agentId}` with the agent's id.
+
+**Do not use Mastra REST API prefix** — use path strictly: `/api/agents/{agentId}/channels/resend/webhook`.
+
 ## Example: `Agent` + `createAgentChannels`
 
 ```typescript

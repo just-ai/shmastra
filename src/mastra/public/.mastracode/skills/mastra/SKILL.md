@@ -30,7 +30,6 @@ ls node_modules/@mastra/
 
 | User Question                          | First Check                                                           | How To                                         |
 |----------------------------------------|-----------------------------------------------------------------------|------------------------------------------------|
-| "Create/install Mastra project"        | [`references/create-mastra.md`](references/create-mastra.md)          | Setup guide with CLI and manual steps          |
 | "How do I use Agent/Workflow/Tool?"    | [`references/embedded-docs.md`](references/embedded-docs.md)          | Look up in `node_modules/@mastra/*/dist/docs/` |
 | "How do I use X?" (no packages)        | [`references/remote-docs.md`](references/remote-docs.md)              | Fetch from `https://mastra.ai/llms.txt`        |
 | "I'm getting an error..."              | [`references/common-errors.md`](references/common-errors.md)          | Common errors and solutions                    |
@@ -376,7 +375,6 @@ Do not rely on already existing agents and workflows - read references!
 
 ## Resources
 
-- **Setup**: [`references/create-mastra.md`](references/create-mastra.md)
 - **Embedded docs lookup**: [`references/embedded-docs.md`](references/embedded-docs.md) - Start here if packages are installed
 - **Remote docs lookup**: [`references/remote-docs.md`](references/remote-docs.md)
 - **Common errors**: [`references/common-errors.md`](references/common-errors.md)
