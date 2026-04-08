@@ -1,8 +1,8 @@
 (function () {
     const isLocalhost = !window.MASTRA_SERVER_PROTOCOL || !window.MASTRA_SERVER_HOST || (window.MASTRA_SERVER_HOST === 'localhost');
     const port = window.MASTRA_SERVER_PORT && window.MASTRA_SERVER_PORT !== '80' && window.MASTRA_SERVER_PORT !== '443' ? `:${window.MASTRA_SERVER_PORT}` : '';
-    const BASE_ENDPOINT = isLocalhost ? "" : `${window.MASTRA_SERVER_PROTOCOL}://${window.MASTRA_SERVER_HOST}${port}`;
-    const BASE_URL = `${BASE_ENDPOINT}/shmastra/public`;
+    const API_BASE_URL = isLocalhost ? "" : `${window.MASTRA_SERVER_PROTOCOL}://${window.MASTRA_SERVER_HOST}${port}`;
+    const BASE_URL = `/shmastra/public`;
 
     function addScript(src, onload) {
         var script = document.createElement('script');
@@ -20,7 +20,7 @@
         addScript('assistant-widget.iife.js', function () {
             AssistantWidget.initAssistantWidget({
                 theme: 'dark',
-                apiBaseUrl: BASE_ENDPOINT,
+                apiBaseUrl: API_BASE_URL,
             });
         });
     }
