@@ -1,5 +1,6 @@
 (function () {
-    const BASE_URL = '/shmastra/public';
+    const BASE_ENDPOINT = (window.MASTRA_SERVER_PROTOCOL && window.MASTRA_SERVER_HOST) ? `${window.MASTRA_SERVER_PROTOCOL}://${window.MASTRA_SERVER_HOST}` : "";
+    const BASE_URL = `${BASE_ENDPOINT}/shmastra/public`;
 
     function addScript(src, onload) {
         var script = document.createElement('script');
@@ -16,7 +17,8 @@
 
         addScript('assistant-widget.iife.js', function () {
             AssistantWidget.initAssistantWidget({
-                theme: 'dark'
+                theme: 'dark',
+                apiBaseUrl: BASE_ENDPOINT,
             });
         });
     }
