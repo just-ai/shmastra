@@ -17,6 +17,11 @@ export const createMastra = async (config: Config) => {
       studioBase: config.server?.studioBase || process.env.MASTRA_STUDIO_BASE_PATH || undefined,
       apiPrefix: config.server?.apiPrefix || process.env.MASTRA_API_PREFIX || undefined,
       port: isDryRun ? undefined : (config.server?.port || port),
+      cors: config.server?.cors || (process.env.CORS_ORIGIN ? {
+        origin: process.env.CORS_ORIGIN,
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+        allowHeaders: ["*"],
+      } : undefined),
     }
   };
   config.server = {
