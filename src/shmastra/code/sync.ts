@@ -194,8 +194,6 @@ function logSyncResults(copied: string[], deletes: string[], nm: NodeModulesStat
     const parts = [`${copied.length} files copied`, `${deletes.length} deleted`]
     if (nm.synced.length + nm.removed > 0) parts.push(`${nm.synced.length} packages synced, ${nm.removed} removed`)
     console.log(`[sync] ${parts.join(', ')}`)
-    for (const p of copied) console.log(`  + ${p}`)
-    for (const p of deletes) console.log(`  - ${p}`)
 }
 
 async function executeSyncPlan(plan: SyncPlan, fresh = false): Promise<void> {
