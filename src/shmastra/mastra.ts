@@ -4,6 +4,7 @@ import {startShmastraWizard} from "./wizard";
 import {isDevMode, isDryRun} from "./env";
 import {withShmastraMiddlewares, withShmastraRoutes} from "./handlers";
 import {deduplicateItemIds} from "./utils";
+import {SimpleAuth} from "@mastra/core/server";
 
 const port = parseInt(process.env.PORT || "4111");
 
@@ -23,6 +24,12 @@ export const createMastra = async (config: Config) => {
         allowHeaders: ["*"],
         credentials: true,
       } : undefined),
+      auth: config.server?.auth || (process.env.MASTRA_AUTH_TOKEN ? new SimpleAuth({
+        headers: "x-mastra-auth-token",
+        tokens: {
+          [process.env.MASTRA_AUTH_TOKEN]: { role: "owner" }
+        }
+      }) : undefined),
     }
   };
   config.server = {
