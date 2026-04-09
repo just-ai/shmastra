@@ -18,7 +18,7 @@ export const createMastra = async (config: Config) => {
       apiPrefix: config.server?.apiPrefix || process.env.MASTRA_API_PREFIX || undefined,
       port: isDryRun ? undefined : (config.server?.port || port),
       cors: config.server?.cors || (process.env.CORS_ORIGIN ? {
-        origin: process.env.CORS_ORIGIN,
+        origin: process.env.CORS_ORIGIN.split(',').map(s => s.trim()).filter(Boolean),
         allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
         allowHeaders: ["*"],
       } : undefined),
