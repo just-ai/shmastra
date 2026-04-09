@@ -21,6 +21,7 @@ export const createMastra = async (config: Config) => {
         origin: process.env.CORS_ORIGIN.split(' ').map(s => s.trim()).filter(Boolean),
         allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
         allowHeaders: ["*"],
+        credentials: true,
       } : undefined),
     }
   };
