@@ -21,7 +21,7 @@ export const createMastra = async (config: Config) => {
       cors: config.server?.cors || (process.env.CORS_ORIGIN ? {
         origin: process.env.CORS_ORIGIN.split(' ').map(s => s.trim()).filter(Boolean),
         allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
-        allowHeaders: ["*"],
+        allowHeaders: ["Content-Type", "Authorization", "x-mastra-auth-token", "x-mastra-client-type"],
         credentials: true,
       } : undefined),
       auth: config.server?.auth || (process.env.MASTRA_AUTH_TOKEN ? new SimpleAuth({
