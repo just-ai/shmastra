@@ -39,7 +39,7 @@ export function createAgentChannels(config: ChannelConfig) {
                     {
                         ...(isConfig ? value : {}),
                         adapter: isConfig ? (value as any).adapter : value,
-                        formatToolCall: (isConfig && (value as any).formatToolCall) ?? (() => null),
+                        formatToolCall: (isConfig && (value as any).formatToolCall) || (() => null),
                     } as ChannelAdapterConfig,
                 ];
             })
