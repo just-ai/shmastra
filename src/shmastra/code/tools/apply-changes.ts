@@ -1,7 +1,7 @@
 import {createTool} from "@mastra/core/tools";
 import {ShmastraProvider} from "../types";
 import {spawn} from "node:child_process";
-import {getTmpDir} from "../../files";
+import {getWorkdir} from "../../files";
 import {getPackageManager} from "../../env";
 
 const TIMEOUT_MS = 30_000;
@@ -10,7 +10,7 @@ const READY_PATTERN = /watching for file changes/;
 function runCommand(command: string, args: string[], timeoutMs: number, successPattern?: RegExp): Promise<string> {
     return new Promise((resolve, reject) => {
         const child = spawn(command, args, {
-            cwd: getTmpDir(),
+            cwd: getWorkdir(),
             stdio: ["ignore", "pipe", "pipe"],
             detached: true,
             env: {

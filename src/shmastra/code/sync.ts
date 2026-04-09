@@ -1,6 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import {findProjectRoot, getTmpDir} from "../files";
+import {findProjectRoot, getWorkdir} from "../files";
 
 // Items never copied to tmp (always excluded from sync)
 const SKIP_COPY = new Set(['README.md', 'AGENTS.md', 'CLAUDE.md', '.git', '.gitignore', '.claude'])
@@ -221,18 +221,18 @@ async function executeSyncPlan(plan: SyncPlan, fresh = false): Promise<void> {
     if (!fresh) logSyncResults(copied, plan.pathsToDelete, nmStats)
 }
 
-export async function copyDirToTmp(dir: string = findProjectRoot()): Promise<string> {
-    const tmpDir = getTmpDir(dir)
-    const fresh = !fs.existsSync(tmpDir) || fs.readdirSync(tmpDir).length === 0
+export async function copyProjectToWorkdir(dir: string = findProjectRoot()): Promise<string> {
+    const workdir = getWorkdir(dir)
+    const fresh = !fs.existsSync(workdir) || fs.readdirSync(workdir).length === 0
     const patterns = parseGitignore(path.join(dir, '.gitignore'))
-    const plan = collectSyncOps(dir, tmpDir, dir, tmpDir, patterns)
+    const plan = collectSyncOps(dir, workdir, dir, workdir, patterns)
     await executeSyncPlan(plan, fresh)
-    return tmpDir
+    return workdir
 }
 
-export async function copyTmpToDir(dir: string = findProjectRoot()): Promise<void> {
-    const tmpDir = getTmpDir(dir)
+export async function copyWorkdirToProject(dir: string = findProjectRoot()): Promise<void> {
+    const workdir = getWorkdir(dir)
     const patterns = parseGitignore(path.join(dir, '.gitignore'))
-    const plan = collectSyncOps(tmpDir, dir, tmpDir, dir, patterns)
+    const plan = collectSyncOps(workdir, dir, workdir, dir, patterns)
     await executeSyncPlan(plan)
 }

@@ -6,6 +6,8 @@ import anyAscii from "any-ascii";
 import {nanoid} from "nanoid";
 import mime from "mime";
 
+const WORKDIR_HOME = process.env.SHMASTRA_WORKDIR_HOME || path.join(os.tmpdir(), 'shmastra');
+
 export async function resolveFileUrl(file: string, mimeType?: string): Promise<string> {
     if (!file.startsWith("http") && !file.startsWith("/")) {
         file = getLocalFileUrl(file);
@@ -51,8 +53,8 @@ export function findProjectRoot(dir: string = process.cwd()): string {
     }
 }
 
-export function getTmpDir(dir: string = findProjectRoot()): string {
-    return path.join(os.tmpdir(), 'shmastra', path.basename(dir))
+export function getWorkdir(dir: string = findProjectRoot()): string {
+    return path.join(WORKDIR_HOME, path.basename(dir))
 }
 
 export function getStorageDir(dir: string = findProjectRoot()): string {

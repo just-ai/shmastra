@@ -8,8 +8,8 @@ import {MastraModelOutput} from "@mastra/core/stream";
 import {Harness} from "@mastra/core/harness";
 import {RequestContext} from "@mastra/core/request-context";
 import {TracingContext, TracingOptions} from "@mastra/core/observability";
-import {findProjectRoot, getStorageDir, getTmpDir} from "../files";
-import {copyDirToTmp, copyTmpToDir} from "./sync";
+import {findProjectRoot, getStorageDir, getWorkdir} from "../files";
+import {copyProjectToWorkdir, copyWorkdirToProject} from "./sync";
 import {patchInstructions} from "./instructions";
 import {createApplyChangesTool} from "./tools/apply-changes";
 import {createAskEnvVarsTool} from "./tools/ask-env-vars-args";
@@ -38,7 +38,7 @@ class ShmastraProviderImpl implements ShmastraProvider {
 
 export async function createShmastraCode(config: Config): Promise<ShmastraCode> {
     const projectRoot = findProjectRoot();
-    const cwd = isDryRun ? projectRoot : await copyDirToTmp();
+    const cwd = isDryRun ? projectRoot : await copyProjectToWorkdir();
     const provider = new ShmastraProviderImpl();
 
     const connectionsTools = {};
@@ -175,7 +175,7 @@ function installApplyChanges(harness: ShmastraHarness) {
     harness.subscribe(event => {
         if (applyChanges && event.type === "agent_end") {
             applyChanges = false;
-            copyTmpToDir().catch((err) => console.error(err));
+            copyWorkdirToProject().catch((err) => console.error(err));
         }
     });
 
@@ -185,7 +185,7 @@ function installApplyChanges(harness: ShmastraHarness) {
 }
 
 function installSetEnvVars(harness: ShmastraHarness) {
-    const envPath = path.resolve(getTmpDir(), '.env');
+    const envPath = path.resolve(getWorkdir(), '.env');
     const promise = {
         resolve: (vars: string[]) => {},
         reject: (err: unknown) => {},

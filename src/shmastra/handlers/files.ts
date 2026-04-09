@@ -1,6 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import {getUploadDir, getTmpDir, getLocalFilePath, createUniqueFileName} from '../files'
+import {getUploadDir, getWorkdir, getLocalFilePath, createUniqueFileName} from '../files'
 import {Handler} from "hono";
 import mime from 'mime';
 import type {ApiRoute} from "@mastra/core/server";
@@ -27,7 +27,7 @@ export const uploadHandler: Handler = async c => {
         })).catch(reject);
     });
 
-    fs.copyFileSync(filePath, path.join(getUploadDir(getTmpDir()), fileName));
+    fs.copyFileSync(filePath, path.join(getUploadDir(getWorkdir()), fileName));
     return c.json({ fileName });
 }
 

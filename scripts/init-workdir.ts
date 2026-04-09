@@ -1,4 +1,4 @@
-import { copyDirToTmp } from '../src/shmastra/code/sync'
+import { copyProjectToWorkdir } from '../src/shmastra/code/sync'
 
-const tmpDir = await copyDirToTmp()
-console.log(tmpDir)
+const workDir = await copyProjectToWorkdir()
+console.log(workDir)
