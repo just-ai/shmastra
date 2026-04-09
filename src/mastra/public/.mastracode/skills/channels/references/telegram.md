@@ -23,6 +23,8 @@ Pass values explicitly into the adapter — do not rely on unprefixed `TELEGRAM_
 
 **IMPORTANT: skip this step if there is no public server URL available in current environment**
 
+> If there is no public server URL available, Telegram channel will automatically start in long polling mode.
+
 Register webhook via Telegram Bot API using `execute_command` tool:
 
 ```shell
