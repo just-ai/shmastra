@@ -3,45 +3,39 @@ import { c, styled } from './colors'
 import { type Provider } from './providers'
 
 
-// ── Provider menu ─────────────────────────────────────────────────────────────
-function printProviderMenu(providers: Provider[], selected: number, showContinue: boolean) {
+// ── Generic arrow-key menu ───────────────────────────────────────────────────
+interface MenuItem {
+    label: string
+    hint?: string
+    color: string
+    bgColor?: string
+}
+
+function printMenu(items: MenuItem[], selected: number) {
     process.stdout.write('\x1b[?25l') // hide cursor
-    // Continue row (first, only when applicable)
-    if (showContinue) {
-        const isSel = selected === 0
-        const prefix = isSel ? styled(' ❯ ', c.green, c.bold) : '   '
-        const label  = isSel
-            ? styled(' ✓  Continue ', c.white, c.bold, c.bgGreen)
-            : styled(' ✓  Continue', c.green, c.bold)
-        console.log(prefix + label)
-    }
-    const offset = showContinue ? 1 : 0
-    providers.forEach((p, i) => {
-        const isSelected = i + offset === selected
-        const prefix = isSelected ? styled(' ❯ ', c.cyan, c.bold) : '   '
-        const label  = isSelected
-            ? styled(` ${p.name} `, c.white, c.bold, c.bgBlue)
-            : styled(` ${p.name}`, c.white)
-        console.log(prefix + label + styled(`  (${p.key})`, c.dim))
+    items.forEach((item, i) => {
+        const isSel = i === selected
+        const prefix = isSel ? styled(' ❯ ', item.color, c.bold) : '   '
+        const label = isSel
+            ? styled(` ${item.label} `, c.white, c.bold, item.bgColor ?? c.bgBlue)
+            : styled(` ${item.label}`, item.color)
+        const hint = item.hint ? styled(`  ${item.hint}`, c.dim) : ''
+        console.log(prefix + label + hint)
     })
-    const cancelIdx = providers.length + offset
-    const isCancelSel = selected === cancelIdx
-    const cancelPrefix = isCancelSel ? styled(' ❯ ', c.red, c.bold) : '   '
-    console.log(cancelPrefix + styled(' ✕  Cancel / exit', isCancelSel ? c.red : c.dim))
     console.log()
     console.log(styled('  ↑/↓ navigate  •  Enter select  •  q quit', c.dim))
     console.log()
 }
 
-export function selectProvider(providers: Provider[], showContinue = false): Promise<number | null> {
+function selectMenu(items: MenuItem[]): Promise<number | null> {
     return new Promise(resolve => {
-        const offset = showContinue ? 1 : 0
         let selected = 0
-        const total  = providers.length + offset + 1 // +1 for cancel row
+        const total = items.length
+        const rows = total + 3 // items + blank + hint + blank
 
         function render(first = false) {
-            if (!first) process.stdout.write(`\x1b[${total + 3}A`)
-            printProviderMenu(providers, selected, showContinue)
+            if (!first) process.stdout.write(`\x1b[${rows}A`)
+            printMenu(items, selected)
         }
 
         render(true)
@@ -57,14 +51,7 @@ export function selectProvider(providers: Provider[], showContinue = false): Pro
                 selected = (selected + 1) % total; render()
             } else if (key.name === 'return') {
                 cleanup()
-                const cancelIdx = providers.length + offset
-                if (selected === cancelIdx) {
-                    resolve(null)
-                } else if (showContinue && selected === 0) {
-                    resolve(null) // Continue = done
-                } else {
-                    resolve(selected - offset)
-                }
+                resolve(selected)
             } else if (key.name === 'q' || (key.ctrl && key.name === 'c')) {
                 cleanup()
                 resolve(null)
@@ -74,12 +61,70 @@ export function selectProvider(providers: Provider[], showContinue = false): Pro
         function cleanup() {
             process.stdin.removeListener('keypress', onKey)
             if (process.stdin.isTTY) process.stdin.setRawMode(false)
-            process.stdout.write('\x1b[?25h') // show cursor
+            process.stdout.write('\x1b[?25h')
         }
 
         process.stdin.on('keypress', onKey)
     })
 }
+
+
+// ── OAuth login menu ─────────────────────────────────────────────────────────
+export type OAuthMenuResult =
+    | { type: 'login'; provider: Provider }
+    | { type: 'skip' }
+    | null
+
+export async function selectOAuthLogin(oauthProviders: Provider[]): Promise<OAuthMenuResult> {
+    const items: MenuItem[] = [
+        ...oauthProviders.map(p => ({
+            label: `Login with ${p.name} account`,
+            color: c.magenta,
+            bgColor: c.bgCyan,
+        })),
+        { label: 'Skip →', color: c.green, bgColor: c.bgGreen },
+    ]
+
+    const idx = await selectMenu(items)
+    if (idx === null) return null
+    if (idx < oauthProviders.length) return { type: 'login', provider: oauthProviders[idx] }
+    return { type: 'skip' }
+}
+
+
+// ── Provider menu (API keys) ─────────────────────────────────────────────────
+export function selectProvider(providers: Provider[], showContinue = false): Promise<number | null> {
+    const items: MenuItem[] = []
+
+    if (showContinue) {
+        items.push({ label: '✓  Continue', color: c.green, bgColor: c.bgGreen })
+    }
+
+    providers.forEach(p => {
+        items.push({ label: p.name, hint: `(${p.key})`, color: c.cyan })
+    })
+
+    items.push({ label: '✕  Cancel / exit', color: c.red })
+
+    return new Promise(resolve => {
+        selectMenu(items).then(idx => {
+            if (idx === null) {
+                resolve(null)
+                return
+            }
+            const offset = showContinue ? 1 : 0
+            const cancelIdx = providers.length + offset
+            if (idx === cancelIdx) {
+                resolve(null)
+            } else if (showContinue && idx === 0) {
+                resolve(null) // Continue = done
+            } else {
+                resolve(idx - offset)
+            }
+        })
+    })
+}
+
 
 // ── Composio prompt ───────────────────────────────────────────────────────────
 export async function promptComposioKey(): Promise<string | null> {
@@ -100,6 +145,7 @@ export async function promptComposioKey(): Promise<string | null> {
         rl.on('SIGINT', () => { rl.close(); process.stdin.resume(); resolve(null) })
     })
 }
+
 
 // ── API key prompt ────────────────────────────────────────────────────────────
 export async function promptApiKey(provider: Provider): Promise<string | null> {

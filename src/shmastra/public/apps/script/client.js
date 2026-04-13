@@ -1,0 +1,28 @@
+import { Mastra } from './mastra.js';
+import fetch from './fetch.js';
+
+const API_BASE_URL = window.MASTRA_SERVER_URL || window.location.origin;
+
+let controller = new AbortController();
+
+export const mastra = new Mastra({
+  baseUrl: API_BASE_URL,
+  apiPrefix: window.MASTRA_API_PREFIX || '/api',
+  abortSignal: controller.signal,
+  fetch: fetch,
+});
+
+export function abort() {
+  controller.abort();
+  controller = new AbortController();
+  mastra.options.abortSignal = controller.signal;
+}
+
+export async function uploadFile(file) {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${API_BASE_URL}/shmastra/api/files`, { method: 'POST', body: form });
+  if (!res.ok) throw new Error('Upload failed');
+  const { fileName } = await res.json();
+  return fileName;
+}

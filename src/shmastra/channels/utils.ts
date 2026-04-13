@@ -16,5 +16,7 @@ export function resolveRelativeUrls(text: string): string {
 }
 
 export function fixTelegramMarkdownV1(text: string) {
-    return text.replace(/^- /gm, '• ');
+    return text
+        .replace(/\\\n/g, '\n')
+        .replace(/^- /gm, '• ');
 }

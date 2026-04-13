@@ -138,6 +138,18 @@ async function isToolkitConnected(toolkit: string) {
     }
 }
 
+async function executeTool(toolSlug: string, args?: Record<string, unknown>) {
+    if (!isConnected()) return null;
+    const session = await getSession();
+    if (!session) return null;
+    const tool = await requireComposio().tools.getRawComposioToolBySlug(toolSlug).catch(() => null);
+    const toolkit = tool?.toolkit?.slug;
+    if (toolkit && !(await isToolkitConnected(toolkit))) {
+        return { error: `Toolkit "${toolkit}" is not connected. Authorize it first using connect_toolkit tool.` };
+    }
+    return session.execute(toolSlug, args);
+}
+
 async function authorizeToolkit(toolkit: string, callbackUrl?: string) {
     if (!isConnected()) return null;
     const session = await getSession();
@@ -172,4 +184,5 @@ export default {
     isToolkitConnected,
     authorizeToolkit,
     getToolSchema,
+    executeTool,
 };

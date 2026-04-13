@@ -24,20 +24,9 @@ ls node_modules/@mastra/
 - **If packages exist:** Use embedded docs first (most reliable)
 - **If no packages:** Install first or use remote docs
 
-## Documentation lookup guide
-
-### Quick Reference
-
-| User Question                          | First Check                                                           | How To                                         |
-|----------------------------------------|-----------------------------------------------------------------------|------------------------------------------------|
-| "How do I use Agent/Workflow/Tool?"    | [`references/embedded-docs.md`](references/embedded-docs.md)          | Look up in `node_modules/@mastra/*/dist/docs/` |
-| "How do I use X?" (no packages)        | [`references/remote-docs.md`](references/remote-docs.md)              | Fetch from `https://mastra.ai/llms.txt`        |
-| "I'm getting an error..."              | [`references/common-errors.md`](references/common-errors.md)          | Common errors and solutions                    |
-| "How do I integrate my agent with API" | [`references/integrations-docs.md`](references/integrations-docs.md)  | Integrate agent with third-party services      |
-
 ### Priority order for writing code
 
-⚠️ **Never write code without checking current docs first**
+**Never write code without checking current docs first**
 
 1. **Embedded docs first** (if packages installed)
 
@@ -68,11 +57,15 @@ ls node_modules/@mastra/
 
 ### Agents vs workflows
 
-**Agent**: Autonomous, makes decisions, uses tools
-Use for: Open-ended tasks (support, research, analysis)
+**Agent** — conversational, multi-turn interaction with the user. 
+The agent decides what to do, picks tools, asks follow-up questions. 
+Use when the task is open-ended and needs a chat UI (support bot, research assistant, advisor).
 
-**Workflow**: Structured sequence of steps
-Use for: Defined processes (pipelines, approvals, ETL)
+**Workflow** — fixed sequence of steps, runs once with given inputs and produces a result. 
+No back-and-forth with the user. 
+Use when the task has a clear input form and a final output (data pipeline, document generation, approval process).
+
+IMPORTANT: before implementing anything, decide which type is better for the task - agent or workflow.
 
 ### Key components
 
@@ -159,16 +152,16 @@ export const myAgent = new Agent({
 }
 ```
 
-### Web browser sub-agent
+### Web browser tools
 
-If your agent needs to perform some headless browser like navigating, page scrapping, page screenshots, etc, equip your agent with `webBrowserAgent`:
+If your agent needs to perform some headless browser like navigating, page scrapping, etc, equip your agent with `browser`:
 
 ```
-import {webBrowserAgent} from "../shmastra/web-browser-agent";
+import {createAgentBrowser} from "../shmastra";
 
 export const myAgent = new Agent({
    ...
-   agents: { webBrowserAgent }
+   browser: createAgentBrowser(),
 }
 ```
 
@@ -189,12 +182,13 @@ export const myAgent = new Agent({
 }
 ```
 
-**This tool answers over unstructured files like pdf, docx, pptx, texts, not csv or xlsx.**
+`queryDocument` tool uses `markitdown` library under the hood to parse file to md and then pipes it to LLM to find answer.
+It can parse any files like pdf, docx, pptx, xlsx, and more.
 
 To work with structured files like csv or xlsx:
 
-1. Analyze if file contains structured data that can be processed with queries
-2. If it can be processed only with natural language - use the same `queryDocumentsTool`
+1. Analyze if file contains structured data that should be processed with structured queries (like sql/pandas)
+2. If it can be processed only with natural language questions - use the same `queryDocumentsTool`
 3. If it contains only structured data - use some nodejs lib to query table data from this file
 
 > You also can use `uv` python interpreter to allow your agent to query any structured files using python code

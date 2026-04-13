@@ -25,6 +25,18 @@ export const getToolSchemaTool = createTool({
     }
 });
 
+export const executeToolkitTool = createTool({
+    id: "execute_toolkit_tool",
+    description: "Execute a connected toolkit's tool by its slug with given arguments. Use get_toolkit_tool_schema first to get the required input schema.",
+    inputSchema: z.object({
+        tool: z.string().describe("Tool slug (e.g. 'GMAIL_SEND_EMAIL')"),
+        arguments: z.record(z.string(), z.unknown()).optional().describe("Tool input arguments matching its schema"),
+    }),
+    execute: ({tool, arguments: args}) => {
+        return connections.executeTool(tool, args);
+    }
+});
+
 export const connectToolkitTool = (provider: ShmastraProvider) =>
     createTool({
         id: "connect_toolkit",

@@ -16,16 +16,16 @@ import {createAskEnvVarsTool} from "./tools/ask-env-vars-args";
 import {ShmastraCode, ShmastraHarness, ShmastraProvider} from "./types";
 import {queryDocumentsTool} from "../rag";
 import {Agent} from "@mastra/core/agent";
-import {mastraClientTools} from "../client";
+import {mastraClientAgent} from "../client";
 import {searchMcpServersTool} from "../mcp/tools";
 import {deduplicateItemIds} from "../utils";
 import connections from "../connections";
-import {connectToolkitTool, getToolSchemaTool, searchToolkitsTool} from "../connections/tools";
+import {connectToolkitTool, executeToolkitTool, getToolSchemaTool, searchToolkitsTool} from "../connections/tools";
 import {isDryRun} from "../env";
 
 export type {ShmastraCode, ShmastraHarness, ShmastraProvider};
 
-const FILTER_TOOLS = ["subagent", "request_access", "submit_plan", "mkdir", "file_stat", "ast_smart_edit", "skill_search"];
+const FILTER_TOOLS = ["request_access", "submit_plan", "mkdir", "file_stat", "ast_smart_edit", "skill_search"];
 
 class ShmastraProviderImpl implements ShmastraProvider {
     harness!: ShmastraHarness;
@@ -46,16 +46,18 @@ export async function createShmastraCode(config: Config): Promise<ShmastraCode> 
         Object.assign(connectionsTools, {
             search_toolkits: searchToolkitsTool,
             get_toolkit_tool_schema: getToolSchemaTool,
+            execute_toolkit_tool: executeToolkitTool,
             connect_toolkit: connectToolkitTool(provider),
         });
     }
 
     const { harness, authStorage, ...code } = await createMastraCode({
         cwd,
-        subagents: [],
+        subagents: [
+            mastraClientAgent
+        ],
         initialState: {
             yolo: true,
-            sandboxAllowedPaths: [path.join(projectRoot, "node_modules")],
         },
         disabledTools: FILTER_TOOLS,
         storage: {
@@ -69,14 +71,16 @@ export async function createShmastraCode(config: Config): Promise<ShmastraCode> 
             query_documents: queryDocumentsTool,
             search_mcp_servers: searchMcpServersTool,
             ...connectionsTools,
-            ...mastraClientTools,
         } as Record<string, any>,
     });
 
-    authStorage.set("anthropic", {
-        type: "api_key",
-        key: process.env.ANTHROPIC_API_KEY || "",
-    });
+    // Only set API key auth if not already logged in via OAuth
+    if (!authStorage.isLoggedIn("anthropic") && process.env.ANTHROPIC_API_KEY) {
+        authStorage.set("anthropic", {
+            type: "api_key",
+            key: process.env.ANTHROPIC_API_KEY,
+        });
+    }
 
     const sh = harness as unknown as ShmastraHarness;
 

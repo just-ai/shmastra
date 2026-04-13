@@ -34,6 +34,7 @@ export async function resolveFileUrl(file: string, mimeType?: string): Promise<s
         try {
             const data = fs.readFileSync(filePath)
             mimeType = mimeType || mime.getType(filePath) || "application/octet-stream";
+            console.log("creating base64")
             return `data:${mimeType};base64,${data.toString('base64')}`
         } catch {
             // give up, return original

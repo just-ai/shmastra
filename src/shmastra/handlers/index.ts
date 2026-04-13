@@ -12,7 +12,7 @@ import {handleStream} from "./stream";
 import {detectPublicUrl} from "./public-url";
 import {chatHandler} from "./chat";
 import {toolkitAuthHandler, toolkitAuthLinkHandler} from "./connections";
-import {healthHandler} from "./health";
+import {appIndexHandler, appStaticHandler} from "./apps";
 import {Middleware} from "../../mastra/middleware";
 
 export function withShmastraMiddlewares(config: Config): Middleware[] {
@@ -33,20 +33,25 @@ export async function withShmastraRoutes(config: Config): Promise<ApiRoute[]> {
   const routes = config.server?.apiRoutes || [];
   const code: ShmastraCode = await createShmastraCode(config);
 
-  const apiPath = (path: string) =>
-      `${config.server?.apiPrefix || "/api"}${path}`;
+  const apiPrefix = config.server?.apiPrefix || "/api";
+  const apiPath = (path: string) => `${apiPrefix}${path}`;
 
   return [
     ...routes,
     {
+      path: "/shmastra/apps/:appName",
+      method: "GET",
+      handler: appIndexHandler(config),
+    },
+    {
+      path: "/shmastra/apps/:appName/:path{.+}",
+      method: "GET",
+      handler: appStaticHandler,
+    },
+    {
       path: "/shmastra/public/:path{.+}",
       method: "GET",
       handler: staticHandler,
-    },
-    {
-      path: "/shmastra/api/health",
-      method: "GET",
-      handler: healthHandler,
     },
     {
       path: "/shmastra/api/thread",

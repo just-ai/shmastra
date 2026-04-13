@@ -1,67 +1,7 @@
 import {createTool} from "@mastra/core/tools";
 import {ShmastraProvider} from "../types";
-import {spawn} from "node:child_process";
 import {getWorkdir} from "../../files";
-import {getPackageManager} from "../../env";
-
-const TIMEOUT_MS = 30_000;
-const READY_PATTERN = /watching for file changes/;
-
-function runCommand(command: string, args: string[], timeoutMs: number, successPattern?: RegExp): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const child = spawn(command, args, {
-            cwd: getWorkdir(),
-            stdio: ["ignore", "pipe", "pipe"],
-            detached: true,
-            env: {
-                ...process.env,
-                DRY_RUN: "true",
-                PORT: "NaN",
-            }
-        });
-
-        let output = "";
-        let settled = false;
-
-        const settle = (fn: (value: string) => void, value: string) => {
-            if (settled) return;
-            settled = true;
-            try {
-                if (child.pid) process.kill(-child.pid, "SIGTERM");
-            } catch {}
-            fn(value);
-        };
-
-        const onData = (chunk: Buffer) => {
-            const text = chunk.toString();
-            output += text;
-
-            if (successPattern?.test(output)) {
-                settle(resolve, output);
-            }
-        };
-
-        child.stdout.on("data", onData);
-        child.stderr.on("data", onData);
-
-        child.on("close", (code) => {
-            if (settled) return;
-            if (code === 0) {
-                settle(resolve, output);
-            } else {
-                settle(reject, output);
-            }
-        });
-
-        setTimeout(() => settle(reject, output), timeoutMs);
-    });
-}
-
-async function dryRun() {
-    const pm = getPackageManager();
-    await runCommand(pm, ["install", "--ignore-scripts"], TIMEOUT_MS);
-    await runCommand(pm, ["run", "dev"], TIMEOUT_MS, READY_PATTERN);
-}
+import {dryRun} from "../../../../scripts/dry-run";
 
 export const createApplyChangesTool = (provider: ShmastraProvider) =>
     createTool({
@@ -69,7 +9,7 @@ export const createApplyChangesTool = (provider: ShmastraProvider) =>
         description: "Apply your changes",
         execute: async () => {
             try {
-                await dryRun();
+                await dryRun(getWorkdir(), { silent: true });
                 provider.harness.applyChanges();
             } catch (e) {
                 return { success: false, error: e }

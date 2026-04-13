@@ -16,12 +16,12 @@ export const projectRootPath: string = findProjectRoot();
 export { getLocalFilePath } from "../../shmastra/files";
 
 /**
- * Obtain full public URL of file in "files" folder.
+ * Obtain relative public URL of file in "files" folder.
  *
  * Example: `getLocalFileUrl("file.txt")`
  *
  * @param file - name or relative path of file
- * @returns [string] - public URL of this file
+ * @returns [string] - relative public URL of this file like "/shmastra/api/files/filename"
  */
 export { getLocalFileUrl } from "../../shmastra/files";
 
@@ -121,3 +121,19 @@ export { queryDocumentsTool } from "../../shmastra/rag";
  * @returns `DynamicArgument<ToolsInput>` - a dynamic tool factory that resolves the appropriate web search tool at runtime, factory returns `{web_search: ToolAction}`
  */
 export { createWebSearchTool } from "../../shmastra/tools";
+
+/**
+ * Headless web browser with tools to navigate, click, taking snapshots, etc.
+ * Set for every agent that really needs it.
+ * Appends at least 15 browser tools to agent.
+ *
+ * ```
+ * import {createAgentBrowser} from "../shmastra";
+ *
+ * export const myAgent = new Agent({
+ *    ...
+ *    browser: createAgentBrowser(),
+ * }
+ * ```
+ */
+export { createAgentBrowser } from "../../shmastra/browser";

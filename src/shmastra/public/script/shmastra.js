@@ -19,7 +19,6 @@
 
         addScript('assistant-widget.iife.js', function () {
             AssistantWidget.initAssistantWidget({
-                theme: 'dark',
                 apiBaseUrl: API_BASE_URL,
             });
         });

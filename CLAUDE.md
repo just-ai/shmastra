@@ -31,28 +31,31 @@ No test suite exists yet (`npm test` is a no-op).
 
 - **`src/shmastra/`** — all Shmastra-specific logic:
   - `mastra.ts` — Mastra factory: runs wizard in dev mode, injects server config, patches agent streams for message deduplication
-  - `handlers/` — Hono HTTP handlers (chat, files, threads, OAuth/Composio, env vars, streaming, public URL detection)
-  - `code/` — mastracode harness for sandboxed code generation. `apply_changes` tool runs dry-run builds (pattern-matches "watching for file changes" = success, 30s timeout)
+  - `handlers/` — Hono HTTP handlers (chat, files, threads, OAuth/Composio, env vars, streaming, apps serving, public URL detection)
+  - `code/` — mastracode harness for sandboxed code generation. Uses subagent pattern for Mastra client operations. `apply_changes` tool runs dry-run builds via `scripts/dry-run.ts`
   - `tools/` — dynamic tool creation (`createAgentTools`, web search)
-  - `agents/` — built-in agents (web browser agent with Playwright MCP)
+  - `agents/` — built-in agents (web browser agent with native AgentBrowser)
+  - `browser/` — AgentBrowser factory (headless Chromium via Mastra's native browser API)
   - `memory/` — agent memory creation
   - `rag/` — markitdown-based RAG (PDF, DOCX, HTML → text, 200k char limit)
   - `mcp/` — MCP server integration and discovery
-  - `connections/` — Composio toolkit (200+ service integrations, session-based OAuth)
+  - `connections/` — Composio toolkit (200+ service integrations, session-based OAuth, toolkit tool execution)
   - `channels/` — multi-channel support (Telegram, Slack, Discord, etc.)
-  - `client/tools/` — tools for agents to invoke other agents/workflows via Mastra client
+  - `client/` — Mastra client subagent with observability tools (metrics, traces, timeseries)
   - `providers.ts` — model selection by tier (fast/general/best) across OpenAI, Google, Anthropic
+  - `wizard/` — interactive setup: OAuth login for providers (OpenAI, Anthropic), API key configuration, Composio setup
   - `env.ts` — .env management, package manager detection (pnpm preferred), public URL resolution
 
 - **`src/mastra/`** — Mastra project configuration and registries:
   - `agents/`, `workflows/`, `scorers/` — auto-injected at build time by Mastra CLI
-  - `storage/` — LibSQL at `.storage/mastra.db`
+  - `storage/` — composite store: LibSQL (default) + DuckDB (observability)
   - `routes/`, `middleware/` — custom API routes and Hono middleware
   - `public/.mastracode/` — skill definitions for the coding agent in Mastra Studio
+  - `public/apps/` — user-created web apps (served at `/shmastra/apps/<name>`, no build step, Preact + htm + DaisyUI via CDN)
 
 ### Request flow
 
-HTTP request → middleware (public URL, script injection, streaming) → route handlers → mastracode harness → LLM with tools → `apply_changes` (dry-run build + hot-reload)
+HTTP request → middleware (public URL, script injection, streaming) → route handlers → mastracode harness → LLM with tools/subagents → `apply_changes` (dry-run build + hot-reload)
 
 ### Model tiers
 
@@ -65,7 +68,8 @@ Models are selected based on availability (API key present) with fallback order:
 
 ### Storage paths
 
-- `.storage/mastra.db` — main database (traces, scores, memory)
+- `.storage/mastra.db` — main database (LibSQL: traces, scores, memory)
+- `.storage/mastra.duckdb` — observability database (DuckDB: metrics, timeseries)
 - `.storage/code.db` — code harness database
 - `files/` — uploaded files with generated public URLs
 - `.mastra/output/` — build output
@@ -90,9 +94,9 @@ Requires Node >= 22.13.0. At least one LLM provider API key must be set:
 - `ANTHROPIC_API_KEY`
 - `GOOGLE_GENERATIVE_AI_API_KEY`
 
-Optional: `COMPOSIO_API_KEY`, `MASTRA_CLOUD_ACCESS_TOKEN`, `PUBLIC_URL`, `USER_ID`.
+Optional: `COMPOSIO_API_KEY`, `MASTRA_AUTH_TOKEN`, `PUBLIC_URL`, `USER_ID`, `CORS_ORIGIN`.
 
-In dev mode, a wizard prompts for missing keys interactively.
+In dev mode, a wizard prompts for OAuth login (OpenAI/Anthropic) and missing API keys interactively.
 
 ## Docker
 
