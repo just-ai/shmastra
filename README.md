@@ -34,4 +34,6 @@ Shmastra lets **anyone** — engineers or not — vibe-code agents and entire wo
 - 🔑 **One-click OAuth** — authorizes you with any external service that requires OAuth
 - 📁 **First-class file handling** — no base64 hacks; files are saved to disk with temporary public URLs generated when running on localhost
 - 🧠 **Built-in RAG + browser** — agents get markitdown-powered RAG, a Playwright browser, and automatic web search via your chosen LLM provider
+- 📱 **App builder** — generates standalone web apps for your agents and workflows, served directly from Mastra Studio
+- 🔐 **Zero-key OAuth** — log in with your existing Anthropic or OpenAI subscription instead of managing API keys
 - 🖼️ **Rich chat extras** — renders iframes for generated HTML, perfect for interactive charts, dashboards, or landing pages your agent creates
