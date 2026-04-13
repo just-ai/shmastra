@@ -82,6 +82,10 @@ if (process.argv[1]?.endsWith("dry-run.ts")) {
 
     dryRun(cwd, { silent: isSilent }).then(
         () => { console.log("Dry run succeeded"); process.exit(0); },
-        (e) => { console.log("Dry run failed"); if (typeof e === "string") console.log(e.slice(-2000)); process.exit(1); },
+        (e) => {
+            console.log("Dry run failed");
+            if (typeof e === "string") console.log(e.slice(-2000));
+            process.exitCode = 1;
+        },
     );
 }
