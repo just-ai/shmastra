@@ -73,7 +73,7 @@ export async function dryRun(cwd: string, opts?: { silent?: boolean }) {
 }
 
 // CLI entry point
-if (process.argv[1]?.endsWith("dry-run.ts")) {
+if (process.argv[1]?.includes("dry-run")) {
     const cwdArg = process.argv.find(a => a.startsWith("--cwd="))?.slice(6);
     const cwd = cwdArg ? path.resolve(cwdArg) : process.cwd();
     const isSilent = process.argv.includes("--silent");
