@@ -130,7 +130,7 @@ Add any ESM-compatible library to the import map. Use `esm.sh` to load npm packa
 
 If the app needs a custom backend endpoint (e.g. aggregation, DB query, proxy), create a route in `src/mastra/routes/` and register it in `src/mastra/routes/index.ts`:
 
-**IMPORTANT: use custom routes if your app really needs it. Always prefer calling workflows and tools over creating custom routes.**
+**IMPORTANT: use custom routes if your app really requires it. Always prefer calling workflows and tools directly using mastra client from `client.js`.**
 
 Route paths must use the prefix `/shmastra/api/apps/<app-name>/`:
 
@@ -165,7 +165,8 @@ const res = await fetch('/shmastra/api/apps/deposits/summary');
 const data = await res.json();
 ```
 
-**Only create custom routes when the Mastra API (agents, workflows, tools) is not enough.** Prefer using workflows, agents and tools over custom routes.
+**Only create custom routes when the Mastra API (agents, workflows, tools) is not enough.** 
+Prefer calling workflows, agents and tools over custom routes.
 
 ## Rules
 
