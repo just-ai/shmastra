@@ -78,17 +78,13 @@ Use `htm` tagged templates instead of JSX (no build step needed):
 // app.js
 import { html, render } from 'htm/preact';
 import { useState } from 'preact/hooks';
-import { Header } from './components/header.js';
-import { Dashboard } from './components/dashboard.js';
+import { Counter } from './components/counter.js';
 
 function App() {
-  const [page, setPage] = useState('dashboard');
-
   return html`
     <div class="min-h-screen bg-base-200">
-      <${Header} currentPage=${page} onNavigate=${setPage} />
       <main class="container mx-auto p-4">
-        ${page === 'dashboard' && html`<${Dashboard} />`}
+        <${Counter} />
       </main>
     </div>
   `;
@@ -98,27 +94,23 @@ render(html`<${App} />`, document.getElementById('app'));
 ```
 
 ```js
-// components/header.js
+// components/counter.js
 import { html } from 'htm/preact';
+import { useState } from 'preact/hooks';
 
-export function Header({ currentPage, onNavigate }) {
+export function Counter() {
+  const [count, setCount] = useState(0);
+
   return html`
-    <div class="navbar bg-base-100 shadow-sm">
-      <div class="flex-1">
-        <a class="btn btn-ghost text-xl">My App</a>
-      </div>
-      <div class="flex-none">
-        <ul class="menu menu-horizontal px-1">
-          <li><a class=${currentPage === 'dashboard' ? 'active' : ''}
-                 onClick=${() => onNavigate('dashboard')}>Dashboard</a></li>
-        </ul>
-      </div>
+    <div class="card bg-base-100 shadow-xl p-6">
+      <h2 class="text-2xl font-bold mb-4">Count: ${count}</h2>
+      <button class="btn btn-primary" onClick=${() => setCount(count + 1)}>
+        Increment
+      </button>
     </div>
   `;
 }
 ```
-
-_This is only an example. Do not use header if your app doesn't need it._
 
 ## Adding extra dependencies
 
