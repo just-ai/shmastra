@@ -14,7 +14,8 @@ type FilePart = {
 export const chatHandler = (code: ShmastraCode): Handler => {
   return async c => {
     const signal = c.req.raw.signal;
-    const path = new URL(c.req.header('referer') || "").pathname;
+    const referer = c.req.header('referer');
+    const path = c.req.header('x-mastra-path') ?? (referer ? new URL(referer).pathname : "/");
     const { messages, modelId, threadId } = await c.req.json();
     const message = messages[messages.length - 1];
 
