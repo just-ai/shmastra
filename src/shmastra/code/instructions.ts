@@ -45,7 +45,9 @@ export function patchInstructions(harness: Harness, config: Config) {
             `\nMastra Studio Base: ${config.server?.studioBase || "/"}` +
             `\nMastra REST API prefix: ${config.server?.apiPrefix || "/api"}` +
             (publicUrl ? `\nPublic server URL: ${publicUrl}` : "") +
-            `\nPackage Manager: ${getPackageManager()}\n\n`
+            `\nPackage Manager: ${getPackageManager()}` +
+            (process.env.MASTRA_AUTH_TOKEN ? "\nMastra API authorization enabled with MASTRA_AUTH_TOKEN env variable (use it in 'x-mastra-auth-token' header in curl requests)" : "") +
+            "\n\n";
 
         return [
             PREAMBLE,
