@@ -9,7 +9,7 @@ const PLUS_ICON = html`<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" v
 const CLOSE_ICON = html`<svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
 const CHEVRON_LEFT = html`<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`;
 const CHEVRON_RIGHT = html`<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`;
-const CHAT_ICON = html`<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
+
 
 // Load chat styles once
 if (!document.getElementById('sc-chat-css')) {
@@ -37,7 +37,7 @@ try {
  *
  * Content:
  *   agentId       - required, Mastra agent ID
- *   title         - empty state heading (default 'AI Assistant')
+ *   title         - agent name, shown in empty state and panel tab (default 'AI Assistant')
  *   subtitle      - empty state description (default 'Ask me anything')
  *   placeholder   - input placeholder (default 'Message...')
  *   suggestions   - array of strings for quick-start buttons
@@ -253,8 +253,8 @@ export function AgentChat(props) {
 
     return html`
       ${collapsed && html`
-        <button class="sc-panel-tab sc-panel-tab-${side}" onClick=${toggleCollapse} title="Open chat">
-          ${CHAT_ICON}
+        <button class="sc-panel-tab sc-panel-tab-${side}" onClick=${toggleCollapse} title=${title}>
+          <span class="sc-panel-tab-label">${title}</span>
         </button>
       `}
       <div class="sc-chat sc-panel sc-panel-${side} ${collapsed ? 'sc-panel-collapsed' : ''} ${className || ''}" style="width:${width}px;${cssVars}">

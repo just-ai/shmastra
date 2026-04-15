@@ -31,7 +31,7 @@ function App() {
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `agentId` | string | **required** | Mastra agent ID |
-| `title` | string | `'AI Assistant'` | Empty state heading |
+| `title` | string | `'AI Assistant'` | Agent name — shown in empty state and as the vertical label on the collapsed panel tab |
 | `subtitle` | string | `'Ask me anything'` | Empty state description |
 | `placeholder` | string | `'Message...'` | Input placeholder text |
 | `suggestions` | `string[]` | `[]` | Quick-start suggestion buttons |
@@ -118,7 +118,7 @@ All variables have dark mode defaults that activate via `prefers-color-scheme: d
 
 When `panel` is set, the chat becomes a fixed sidebar pinned to the viewport edge:
 
-- **Collapsible** — toggle button on the panel edge, floating chat icon when collapsed
+- **Collapsible** — toggle button on the panel edge; when collapsed, a vertical side tab with the agent name (`title`) peeks from the screen edge
 - **Resizable** — drag the inner edge to resize between `panelMinWidth` and `panelMaxWidth`
 - **Persistent width** — panel width is saved to `localStorage` per agent
 - **Reactive** — `onResize(width)` callback lets the parent adjust its layout

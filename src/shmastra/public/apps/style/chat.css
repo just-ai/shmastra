@@ -424,14 +424,14 @@
 .sc-panel-right .sc-panel-collapse { left: -14px; }
 .sc-panel-left .sc-panel-collapse { right: -14px; }
 
-/* Floating tab to reopen collapsed panel */
+/* Side tab to reopen collapsed panel */
 .sc-panel-tab {
   position: fixed;
-  bottom: 24px;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 101;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 28px;
+  padding: 12px 0;
   border: 1px solid var(--sc-border);
   background: var(--sc-panel-bg);
   color: var(--sc-muted);
@@ -445,8 +445,28 @@
 
 .sc-panel-tab:hover { color: var(--sc-text); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18); }
 
-.sc-panel-tab-right { right: 16px; }
-.sc-panel-tab-left { left: 16px; }
+.sc-panel-tab-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.sc-panel-tab-right {
+  right: 0;
+  border-radius: 8px 0 0 8px;
+  border-right: none;
+}
+.sc-panel-tab-right .sc-panel-tab-label { transform: rotate(180deg); }
+
+.sc-panel-tab-left {
+  left: 0;
+  border-radius: 0 8px 8px 0;
+  border-left: none;
+}
 
 @media (max-width: 480px) { .sc-panel { width: 100% !important; } }
 

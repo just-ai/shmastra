@@ -2,7 +2,7 @@ import { createMastraCode } from 'mastracode'
 import * as fs from 'fs'
 import * as path from 'path'
 
-import { OBSERVER_MODELS, DEVELOPER_MODELS } from '../providers'
+import { OBSERVER_MODELS, DEVELOPER_MODELS, findAvailableModel } from '../providers'
 import {Config} from "@mastra/core/mastra";
 import {MastraModelOutput} from "@mastra/core/stream";
 import {Harness} from "@mastra/core/harness";
@@ -41,6 +41,7 @@ export async function createShmastraCode(config: Config): Promise<ShmastraCode> 
     const cwd = isDryRun ? projectRoot : await copyProjectToWorkdir();
     const provider = new ShmastraProviderImpl();
 
+    const omModelId = findAvailableModel(OBSERVER_MODELS);
     const connectionsTools = {};
     if (connections.isConnected()) {
         Object.assign(connectionsTools, {
@@ -58,6 +59,12 @@ export async function createShmastraCode(config: Config): Promise<ShmastraCode> 
         ],
         initialState: {
             yolo: true,
+            observationThreshold: 50_000,
+            reflectionThreshold: 80_000,
+            ...omModelId && {
+                observerModelId: omModelId,
+                reflectorModelId: omModelId,
+            },
         },
         disabledTools: FILTER_TOOLS,
         storage: {
@@ -104,27 +111,52 @@ async function initModels(harness: Harness) {
         }
     }
 
-    const observerModel = availableModels.find(m => OBSERVER_MODELS.some(f => m.id === f)) ?? availableModels[0]
-    const observerModelId = harness.getObserverModelId()
-    if (observerModel && !availableModels.some(m => m.id === observerModelId)) {
-        await harness.switchObserverModel({ modelId: observerModel.id })
-    }
-
-    const reflectorModelId = harness.getReflectorModelId()
-    if (observerModel && !availableModels.some(m => m.id === reflectorModelId)) {
-        await harness.switchReflectorModel({ modelId: observerModel.id })
+    const observerModel = availableModels.find(m => OBSERVER_MODELS.some(f => m.id === f))
+    if (observerModel) {
+        if (harness.getObserverModelId() !== observerModel.id) {
+            await harness.switchObserverModel({ modelId: observerModel.id })
+        }
+        if (harness.getReflectorModelId() !== observerModel.id) {
+            await harness.switchReflectorModel({ modelId: observerModel.id })
+        }
     }
 }
 
 function patchHarness(harness: ShmastraHarness, config: Config) {
     installStream(harness);
+    installOmFailureSuppression(harness);
     patchInstructions(harness, config);
     installAnswerQuestion(harness);
     installFindThreadById(harness);
     installApplyChanges(harness);
     installSetEnvVars(harness);
     installConnectionStatus(harness);
+    restrictSkillPaths(harness);
     filterTools(harness);
+}
+
+function restrictSkillPaths(harness: ShmastraHarness) {
+    const originalWorkspaceFn = (harness as any).workspaceFn;
+    if (typeof originalWorkspaceFn !== 'function') return;
+
+    const allowedSkillPaths = [path.join(process.cwd(), '.mastracode', 'skills')];
+
+    (harness as any).workspaceFn = function (this: any, ...args: any[]) {
+        const result = originalWorkspaceFn.apply(this, args);
+
+        const patchWorkspace = (ws: any) => {
+            if (ws?._config) {
+                ws._config.skills = allowedSkillPaths;
+                ws._skills = undefined;
+            }
+            return ws;
+        };
+
+        if (result && typeof result.then === 'function') {
+            return result.then(patchWorkspace);
+        }
+        return patchWorkspace(result);
+    };
 }
 
 function filterTools(harness: ShmastraHarness) {
@@ -256,6 +288,44 @@ function installConnectionStatus(harness: ShmastraHarness) {
         connections[toolkit]?.resolve();
         delete connections[toolkit];
     }
+}
+
+function repairCorruptedModel(errorMessage: string) {
+    const match = errorMessage.match(/not found at (.+)/);
+    if (!match) return;
+    const missingFile = match[1];
+    const modelDir = path.dirname(missingFile);
+    if (!fs.existsSync(modelDir)) return;
+    try {
+        fs.rmSync(modelDir, { recursive: true });
+        const tarGz = modelDir + '.tar.gz';
+        if (fs.existsSync(tarGz)) fs.unlinkSync(tarGz);
+        console.warn(`[shmastra] Removed corrupted model cache: ${modelDir}`);
+    } catch (err) {
+        console.error(`[shmastra] Failed to clean model cache: ${err}`);
+    }
+}
+
+function installOmFailureSuppression(harness: ShmastraHarness) {
+    let suppressNextAbort = false;
+
+    harness.subscribe((event: any) => {
+        if (event.type === 'error' && event.error?.message?.startsWith('Observational memory')) {
+            console.error(event.error.message);
+            suppressNextAbort = true;
+            repairCorruptedModel(event.error.message);
+        }
+    });
+
+    const originalAbort = harness.abort.bind(harness);
+    harness.abort = function () {
+        if (suppressNextAbort) {
+            suppressNextAbort = false;
+            console.warn('[shmastra] OM failure detected — continuing generation');
+            return;
+        }
+        originalAbort();
+    };
 }
 
 function installStream(harness: any) {

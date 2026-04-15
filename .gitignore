@@ -5,6 +5,7 @@ files
 .mastra
 .storage
 .idea
+.logs
 .env.development
 .env
 *.db

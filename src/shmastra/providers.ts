@@ -24,8 +24,11 @@ export const DEVELOPER_MODELS = [
     'google/gemini-3.1-pro-preview',
 ]
 
+export const findAvailableModel = (models: string[]) =>
+    models.find(m => AVAILABLE_MODELS.includes(m));
+
 export const getAvailableModel = (models: string[], defaultModel = models[0]) =>
-    models.find(m => AVAILABLE_MODELS.includes(m)) || defaultModel;
+    findAvailableModel(models) || defaultModel;
 
 export const getAgentModel = (key: keyof typeof AGENT_MODELS) =>
     getAvailableModel(AGENT_MODELS[key])
