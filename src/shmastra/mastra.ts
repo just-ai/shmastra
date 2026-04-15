@@ -29,7 +29,8 @@ export const createMastra = async (config: Config) => {
         headers: ["x-mastra-auth-token", "Authorization"],
         tokens: {
           [process.env.MASTRA_AUTH_TOKEN]: { role: "owner" }
-        }
+        },
+        public: [/\/public\//, /\/files\//],
       }) : undefined),
     }
   };
