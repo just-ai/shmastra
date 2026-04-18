@@ -165,6 +165,11 @@ export const myCustomTool = createTool({
 `context` has a type of `ToolExecutionContext` with next _optional_ props: `mastra`, `requestContext`, `abortSignal`, `workspace` and others.
 Learn more about context and tools in embedded mastra docs.
 
+### MCP tools
+
+If you create or use some MCP client - use `listTools()` method to obtain tools from MCP client, not a `getTools()`.
+Learn more in `references/integrations-docs.md`.
+
 ### Web search tool
 
 If you agent needs access to live web search results, equip it with `web_search` tool using `createWebSearchTool()` builder:
