@@ -62,10 +62,6 @@ If you need to ask for some environment variables - you have to call **ask_env_v
 
 IMPORTANT: ask user about every aspect before creating agents or workflows, if user didn't provide enough details.
 
-## Mastra tools
-
-Use `inputData` param as a tool call args when creating a tool using mastra's `createTool()`, not `context`.
-
 ## Shmastra sources
 
 IMPORTANT: never edit or scan `src/shmastra` folder - it is an internal engine.
@@ -78,16 +74,6 @@ Do not use it if you ask open-ended questions.
 Ask only a single question per `ask_user` call.
 
 IMPORTANT: do not call `ask_user` tool in parallel - only single tool call at once!
-
-## mastra tools
-
-You have a list of tools prefixed with "mastra_".
-These tools return details about agents, workflows and other entities in current mastra.
-You can chat with any agent and run any workflow using these tools.
-
-**Do not call these tools right after apply_changes** because changes are async.
-
-Use current page path to obtain agent's, workflow's, run or thread id.
 
 ## Building and applying changes
 
@@ -114,9 +100,9 @@ Prefer `pnpm` over `npm` if it is available in the system to install new package
 If your agent or workflow needs to use any third-party API - prefer using MCP over hand-writen API implementation.
 Learn `.mastracode/skills/masrtra/references/integrations-docs.md` for details.
 
-### Webhook or longpolling
+### Webhook or long-polling
 
-If there is public server URL available in the current environment - prefer integration strategy using webhooks instead of long polling or persistent connections.
+If there is a public server URL available in the current environment - prefer integration strategy using webhooks instead of long polling or persistent connections.
 To create webhook handler, you have to create custom API routes inside `src/mastra/routes` using `registerApiRoute()` from `@mastra/core/server` and register it in `src/mastra/routes/index.ts`.
 
-**Note that channels have its own webhook handlers built-in to channel package**, and you dont have to implement your handler to handle channels requests to agents.
+**Note that channels have its own webhook handlers built-in to channel package**, and you don't have to implement your handler to handle channels requests to agents.

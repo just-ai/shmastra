@@ -11,7 +11,8 @@
     "postinstall": "node scripts/install-markitdown.mjs",
     "init-workdir": "npx tsx scripts/init-workdir.ts",
     "install-browsers": "npx tsx scripts/install-browsers.ts",
-    "dry-run": "npx tsx scripts/dry-run.ts"
+    "dry-run": "npx tsx scripts/dry-run.ts",
+    "update-lockfile": "npm install --package-lock-only"
   },
   "keywords": [],
   "author": "",
@@ -64,6 +65,8 @@
     "esbuild": "^0.28.0",
     "mastra": "^1.6.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "execa": "^9.6.1",
+    "@ast-grep/napi": "^0.40.5"
   }
 }

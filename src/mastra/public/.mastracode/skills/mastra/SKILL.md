@@ -136,6 +136,35 @@ export const myAgent = new Agent({
 
 **Do not pass tools to `tools` prop without this wrapper**
 
+### Custom tools
+
+Place your custom tools under `src/mastra/tools` dir.
+
+```
+import {createTool} from "@mastra/core/tools";
+
+type MyCustomToolArgs = {
+    ...
+}
+
+export const myCustomTool = createTool({
+    id: "my_custom_tool",
+    description: "Tool description",
+    inputSchema: z.object({
+        ...
+    }),
+    outputSchema: z.object({
+        ...
+    }),
+    execute: async (args: MyCustomToolArgs, context) => {
+      ...
+    }
+});
+```
+
+`context` has a type of `ToolExecutionContext` with next _optional_ props: `mastra`, `requestContext`, `abortSignal`, `workspace` and others.
+Learn more about context and tools in embedded mastra docs.
+
 ### Web search tool
 
 If you agent needs access to live web search results, equip it with `web_search` tool using `createWebSearchTool()` builder:

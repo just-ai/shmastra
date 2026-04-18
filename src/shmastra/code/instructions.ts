@@ -6,6 +6,7 @@ import {RequestContext} from "@mastra/core/request-context";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import {getPackageManager, getPublicUrl} from "../env";
+import {projectRootPath} from "../../mastra/shmastra";
 
 const PREAMBLE = "You are a Shmastra Code, an interactive web coding agent that helps to build and edit Mastra agents and workflows.";
 
@@ -42,6 +43,7 @@ export function patchInstructions(harness: Harness, config: Config) {
         let message = systemMessageToString(instructions);
         let environmentSection = extractSection(message, "# Environment");
         environmentSection = (environmentSection || "") +
+            `\nUpstream project root: ${projectRootPath}. Files are copying and Mastra server is running in this folder after applying changes.` +
             `\nMastra Studio Base: ${config.server?.studioBase || "/"}` +
             `\nMastra REST API prefix: ${config.server?.apiPrefix || "/api"}` +
             (publicUrl ? `\nPublic server URL: ${publicUrl}` : "") +
