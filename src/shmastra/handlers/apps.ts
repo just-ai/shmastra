@@ -9,6 +9,10 @@ import mime from "mime";
 
 const appsDir = join(process.cwd(), "apps");
 
+function jsString(value: string): string {
+  return JSON.stringify(value).replace(/</g, "\\u003c");
+}
+
 async function injectGlobals(html: string, config: Config): Promise<string> {
   const publicUrl = await getPublicUrl();
   const serverUrl = publicUrl || `http://localhost:${config.server?.port || "4111"}`;
@@ -16,9 +20,9 @@ async function injectGlobals(html: string, config: Config): Promise<string> {
   const token = process.env.MASTRA_AUTH_TOKEN ?? "";
 
   const script = `<script>
-window.MASTRA_SERVER_URL='${serverUrl}';
-window.MASTRA_API_PREFIX='${apiPrefix}';
-window.MASTRA_AUTH_TOKEN='${token}';
+window.MASTRA_SERVER_URL=${jsString(serverUrl)};
+window.MASTRA_API_PREFIX=${jsString(apiPrefix)};
+window.MASTRA_AUTH_TOKEN=${jsString(token)};
 </script>`;
 
   return html.replace("<head>", `<head>${script}`);

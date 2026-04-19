@@ -11,6 +11,15 @@
         document.head.appendChild(script);
     }
 
+    function addModule(src) {
+        var script = document.createElement('script');
+        script.type = 'module';
+        script.src = src;
+        document.head.appendChild(script);
+    }
+
+    addModule(`${BASE_URL}/apps/script/fetch.js`);
+
     if (!window.location.pathname.includes('/agents/session/')) {
         var link = document.createElement('link');
         link.rel = 'stylesheet';
