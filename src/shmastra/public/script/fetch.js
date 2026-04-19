@@ -63,5 +63,3 @@ if (MASTRA_AUTH_TOKEN) {
     return originalSend.apply(this, arguments);
   };
 }
-
-export default authFetch;

@@ -25,7 +25,8 @@ window.MASTRA_API_PREFIX=${jsString(apiPrefix)};
 window.MASTRA_AUTH_TOKEN=${jsString(token)};
 </script>`;
 
-  return html.replace("<head>", `<head>${script}`);
+  const fetchPatch = `<script src="/shmastra/public/script/fetch.js"></script>`;
+  return html.replace("<head>", `<head>${script}${fetchPatch}`);
 }
 
 export const appIndexHandler =

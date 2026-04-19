@@ -1,5 +1,4 @@
 import { Mastra } from './mastra.js';
-import fetch from './fetch.js';
 
 const API_BASE_URL = window.MASTRA_SERVER_URL || window.location.origin;
 
@@ -9,7 +8,6 @@ export const mastra = new Mastra({
   baseUrl: API_BASE_URL,
   apiPrefix: window.MASTRA_API_PREFIX || '/api',
   abortSignal: controller.signal,
-  fetch: fetch,
 });
 
 export function abort() {

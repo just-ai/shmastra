@@ -8,6 +8,9 @@ description: "Guide how to build modern web applications for agents and workflow
 Create lightweight web applications for Mastra agents and workflows.
 No build step required — apps run directly in the browser using ES modules, import maps, Preact, Tailwind CSS, and DaisyUI.
 
+**IMPORTANT: only create a web app when the user explicitly asks for one (e.g. "make a dashboard", "create a UI").**
+If the user asks to enhance an agent's output (e.g. charts, rich responses), use a tool that generates an HTML file and returns its URL instead — that does not require a full web app.
+
 ## References
 
 - [DaisyUI components](references/daisyui.md) — all supported DaisyUI components
@@ -156,11 +159,9 @@ import { depositsRoute } from './deposits';
 export const apiRoutes: ApiRoute[] = [depositsRoute];
 ```
 
-In the app, always use the authenticated fetch to call custom routes:
+In the app, use regular `fetch` to call custom routes (auth token is injected automatically):
 
 ```js
-import fetch from '/shmastra/public/apps/script/fetch.js';
-
 const res = await fetch('/shmastra/api/apps/deposits/summary');
 const data = await res.json();
 ```
