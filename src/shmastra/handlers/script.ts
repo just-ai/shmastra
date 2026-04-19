@@ -27,9 +27,10 @@ export const injectScript: Middleware = async (c, next) => {
         const html = await c.res.text()
         const token = process.env.MASTRA_AUTH_TOKEN ?? ""
         const globals = `<script>window.MASTRA_AUTH_TOKEN=${jsString(token)};</script>`
+        const shmastraScript = `<script src="/shmastra/public/script/shmastra.js"></script>`
         const modified = html
             .replace('<head>', `<head>${globals}`)
-            .replace('</body>', '<script src="/shmastra/public/script/shmastra.js"></script></body>')
+            .replace('</head>', `${shmastraScript}</head>`)
         c.res = new Response(modified, c.res)
     }
 }

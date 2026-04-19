@@ -6,6 +6,7 @@
 
     function addScript(src, onload) {
         var script = document.createElement('script');
+        script.async = false;
         script.src = `${BASE_URL}/script/${src}`;
         if (onload) script.onload = onload;
         document.head.appendChild(script);
