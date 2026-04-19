@@ -177,21 +177,27 @@ export function AgentChat(props) {
 
   const onFiles = async (fileList) => {
     for (const file of fileList) {
-      const entry = { name: file.name, fileName: null, uploading: true };
+      const controller = new AbortController();
+      const entry = { name: file.name, fileName: null, uploading: true, controller };
       setFiles(prev => [...prev, entry]);
       try {
-        const fileName = await uploadFile(file);
-        setFiles(prev => prev.map(f => f === entry ? { ...f, fileName, uploading: false } : f));
+        const fileName = await uploadFile(file, controller.signal);
+        setFiles(prev => prev.map(f => f === entry ? { ...f, fileName, uploading: false, controller: null } : f));
       } catch {
         setFiles(prev => prev.filter(f => f !== entry));
       }
     }
   };
 
-  const removeFile = (entry) => setFiles(prev => prev.filter(f => f !== entry));
+  const removeFile = (entry) => {
+    if (entry.uploading && entry.controller) entry.controller.abort();
+    setFiles(prev => prev.filter(f => f !== entry));
+  };
+
+  const uploading = files.some(f => f.uploading);
 
   const send = async (text) => {
-    if ((!text.trim() && files.length === 0) || loading) return;
+    if ((!text.trim() && files.length === 0) || loading || uploading) return;
     const attachedFiles = files.filter(f => f.fileName);
     const fileNames = attachedFiles.map(f => f.fileName);
     const msgContent = text.trim() + (fileNames.length ? '\n\nAttached files: ' + fileNames.join(', ') : '');
@@ -341,9 +347,11 @@ export function AgentChat(props) {
           <div class="sc-files">
             ${files.map(f => html`
               <div class="sc-file-chip ${f.uploading ? 'sc-file-uploading' : ''}">
-                <span>📎 ${f.name}</span>
-                ${!f.uploading && html`<button onClick=${() => removeFile(f)}>${CLOSE_ICON}</button>`}
-                ${f.uploading && html`<span>…</span>`}
+                ${f.uploading
+                  ? html`<span class="sc-file-spinner" />`
+                  : html`<span>📎</span>`}
+                <span>${f.name}</span>
+                <button onClick=${() => removeFile(f)} title=${f.uploading ? 'Cancel upload' : 'Remove'}>${CLOSE_ICON}</button>
               </div>
             `)}
           </div>
@@ -369,7 +377,7 @@ export function AgentChat(props) {
           ${loading
             ? html`<button class="sc-btn sc-btn-stop" onClick=${() => abort()}>${STOP_ICON}</button>`
             : input.trim()
-              ? html`<button class="sc-btn sc-btn-send" onClick=${() => send(input)}>${SEND_ICON}</button>`
+              ? html`<button class="sc-btn sc-btn-send" onClick=${() => send(input)} disabled=${uploading} title=${uploading ? 'Wait for upload to finish' : ''}>${SEND_ICON}</button>`
               : messages.length > 0
                 ? html`<button class="sc-btn sc-btn-new" onClick=${newChat} title="New chat">${NEW_ICON}</button>`
                 : null

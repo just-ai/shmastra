@@ -19,10 +19,10 @@ export function abort() {
   mastra.options.abortSignal = controller.signal;
 }
 
-export async function uploadFile(file) {
+export async function uploadFile(file, signal) {
   const form = new FormData();
   form.append('file', file);
-  const res = await fetch(`${API_BASE_URL}/shmastra/api/files`, { method: 'POST', body: form });
+  const res = await fetch(`${API_BASE_URL}/shmastra/api/files`, { method: 'POST', body: form, signal });
   if (!res.ok) throw new Error('Upload failed');
   const { fileName } = await res.json();
   return fileName;

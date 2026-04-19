@@ -332,7 +332,17 @@
 .sc-file-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sc-file-chip button { background: none; border: none; cursor: pointer; color: var(--sc-muted); display: flex; padding: 2px; border-radius: 50%; }
 .sc-file-chip button:hover { color: var(--sc-text); }
-.sc-file-uploading { opacity: 0.6; }
+.sc-file-uploading { opacity: 0.75; }
+.sc-file-spinner {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--sc-border);
+  border-top-color: var(--sc-text);
+  border-radius: 50%;
+  animation: sc-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes sc-spin { to { transform: rotate(360deg); } }
 
 .sc-msg-files { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
 .sc-msg-file { font-size: 12px; background: rgba(255, 255, 255, 0.15); padding: 2px 8px; border-radius: 6px; }
