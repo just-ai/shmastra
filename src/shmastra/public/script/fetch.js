@@ -1,11 +1,21 @@
 const MASTRA_AUTH_TOKEN = window.MASTRA_AUTH_TOKEN;
-const MASTRA_SERVER_URL = window.MASTRA_SERVER_URL;
 
 const mastraOrigin = (() => {
-  if (!MASTRA_SERVER_URL) return window.location.origin;
-  try { return new URL(MASTRA_SERVER_URL).origin; }
-  catch { return window.location.origin; }
+  if (window.MASTRA_SERVER_URL) {
+    try { return new URL(window.MASTRA_SERVER_URL).origin; } catch {}
+  }
+  if (window.MASTRA_SERVER_HOST) {
+    const proto = window.MASTRA_SERVER_PROTOCOL || 'https';
+    const port = window.MASTRA_SERVER_PORT && window.MASTRA_SERVER_PORT !== '80' && window.MASTRA_SERVER_PORT !== '443'
+      ? ':' + window.MASTRA_SERVER_PORT : '';
+    return `${proto}://${window.MASTRA_SERVER_HOST}${port}`;
+  }
+  return window.location.origin;
 })();
+
+if (!window.MASTRA_SERVER_URL) {
+  window.MASTRA_SERVER_URL = mastraOrigin;
+}
 
 function isMastraUrl(url) {
   if (url == null) return false;

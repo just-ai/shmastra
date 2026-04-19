@@ -3,7 +3,7 @@ import { readFile, stat } from "fs/promises";
 import { createReadStream } from "fs";
 import { join } from "path";
 import { Readable } from "stream";
-import { getPublicUrl } from "../env";
+
 import { Handler } from "hono";
 import mime from "mime";
 
@@ -14,13 +14,10 @@ function jsString(value: string): string {
 }
 
 async function injectGlobals(html: string, config: Config): Promise<string> {
-  const publicUrl = await getPublicUrl();
-  const serverUrl = publicUrl || `http://localhost:${config.server?.port || "4111"}`;
   const apiPrefix = config.server?.apiPrefix || "/api";
   const token = process.env.MASTRA_AUTH_TOKEN ?? "";
 
   const script = `<script>
-window.MASTRA_SERVER_URL=${jsString(serverUrl)};
 window.MASTRA_API_PREFIX=${jsString(apiPrefix)};
 window.MASTRA_AUTH_TOKEN=${jsString(token)};
 </script>`;
