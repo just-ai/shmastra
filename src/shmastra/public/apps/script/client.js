@@ -1,6 +1,9 @@
 import { Mastra } from './mastra.js';
 
-const API_BASE_URL = window.MASTRA_SERVER_URL || window.location.origin;
+const API_BASE_URL = window.MASTRA_SERVER_URL
+  || (window.MASTRA_SERVER_HOST
+    ? `${window.MASTRA_SERVER_PROTOCOL || 'https'}://${window.MASTRA_SERVER_HOST}${window.MASTRA_SERVER_PORT && window.MASTRA_SERVER_PORT !== '80' && window.MASTRA_SERVER_PORT !== '443' ? ':' + window.MASTRA_SERVER_PORT : ''}`
+    : window.location.origin);
 
 let controller = new AbortController();
 
