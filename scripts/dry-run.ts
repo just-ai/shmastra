@@ -2,7 +2,16 @@ import {spawn, execSync} from "node:child_process";
 import path from "node:path";
 
 const TIMEOUT_MS = 30_000;
+const KILL_GRACE_MS = 3_000;
 const READY_PATTERN = /watching for file changes/;
+
+function killGroup(pid: number, signal: NodeJS.Signals) {
+    try {
+        process.kill(-pid, signal);
+    } catch {
+        try { process.kill(pid, signal); } catch {}
+    }
+}
 
 function getPackageManager(): string {
     try {
@@ -14,6 +23,26 @@ function getPackageManager(): string {
 }
 
 let silent = false;
+
+const liveChildren = new Set<number>();
+
+async function terminate(pid: number): Promise<void> {
+    if (!liveChildren.has(pid)) return;
+    killGroup(pid, "SIGTERM");
+    await new Promise<void>((resolve) => {
+        const timer = setTimeout(() => {
+            killGroup(pid, "SIGKILL");
+            resolve();
+        }, KILL_GRACE_MS);
+        const check = setInterval(() => {
+            if (!liveChildren.has(pid)) {
+                clearTimeout(timer);
+                clearInterval(check);
+                resolve();
+            }
+        }, 100);
+    });
+}
 
 export function runCommand(command: string, args: string[], timeoutMs: number, cwd: string, successPattern?: RegExp): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -28,40 +57,52 @@ export function runCommand(command: string, args: string[], timeoutMs: number, c
             },
         });
 
+        if (child.pid) liveChildren.add(child.pid);
+
         let output = "";
         let settled = false;
+        let timeoutHandle: NodeJS.Timeout | undefined;
 
-        const settle = (fn: (value: string) => void, value: string) => {
+        const finish = (fn: (value: string) => void, value: string) => {
             if (settled) return;
             settled = true;
-            try {
-                if (child.pid) process.kill(-child.pid, "SIGTERM");
-            } catch {}
-            fn(value);
+            if (timeoutHandle) clearTimeout(timeoutHandle);
+            const pid = child.pid;
+            if (pid && liveChildren.has(pid)) {
+                terminate(pid).then(() => fn(value));
+            } else {
+                fn(value);
+            }
         };
 
         const onData = (chunk: Buffer) => {
             const text = chunk.toString();
-            if (!silent) process.stdout.write(text);
+            if (!silent && !settled) process.stdout.write(text);
             output += text;
             if (successPattern?.test(output)) {
-                settle(resolve, output);
+                finish(resolve, output);
             }
         };
 
         child.stdout.on("data", onData);
         child.stderr.on("data", onData);
 
+        child.on("error", () => {
+            if (child.pid) liveChildren.delete(child.pid);
+            finish(reject, output);
+        });
+
         child.on("close", (code) => {
+            if (child.pid) liveChildren.delete(child.pid);
             if (settled) return;
             if (code === 0) {
-                settle(resolve, output);
+                finish(resolve, output);
             } else {
-                settle(reject, output);
+                finish(reject, output);
             }
         });
 
-        setTimeout(() => settle(reject, output), timeoutMs);
+        timeoutHandle = setTimeout(() => finish(reject, output), timeoutMs);
     });
 }
 
@@ -72,6 +113,11 @@ export async function dryRun(cwd: string, opts?: { silent?: boolean }) {
     await runCommand(pm, ["run", "dev"], TIMEOUT_MS, cwd, READY_PATTERN);
 }
 
+async function shutdownAll() {
+    const pids = Array.from(liveChildren);
+    await Promise.all(pids.map(terminate));
+}
+
 // CLI entry point
 if (process.argv[1]?.includes("dry-run")) {
     const cwdArg = process.argv.find(a => a.startsWith("--cwd="))?.slice(6);
@@ -80,12 +126,28 @@ if (process.argv[1]?.includes("dry-run")) {
 
     console.log(`Dry run in ${cwd}`);
 
+    let interrupted = false;
+    const onSignal = async (sig: NodeJS.Signals) => {
+        if (interrupted) return;
+        interrupted = true;
+        await shutdownAll();
+        process.exit(sig === "SIGINT" ? 130 : 143);
+    };
+    process.on("SIGINT", onSignal);
+    process.on("SIGTERM", onSignal);
+    process.on("SIGHUP", onSignal);
+
     dryRun(cwd, { silent: isSilent }).then(
-        () => { console.log("Dry run succeeded"); process.exit(0); },
-        (e) => {
+        async () => {
+            console.log("Dry run succeeded");
+            await shutdownAll();
+            process.exit(0);
+        },
+        async (e) => {
             console.log("Dry run failed");
             if (typeof e === "string") console.log(e.slice(-2000));
-            process.exitCode = 1;
+            await shutdownAll();
+            process.exit(1);
         },
     );
 }
