@@ -1,5 +1,5 @@
 import {Memory} from "@mastra/memory";
-import {getAvailableModel, OBSERVER_MODELS} from "../providers";
+import {getAvailableModels, OBSERVER_MODELS} from "../providers";
 
 /**
  * Creates memory for agent.
@@ -9,7 +9,7 @@ export const createAgentMemory = () =>
     new Memory({
         options: {
             observationalMemory: {
-                model: getAvailableModel(OBSERVER_MODELS),
+                model: getAvailableModels(OBSERVER_MODELS).map(model => ({model, maxRetries: 1})),
             }
         }
     });

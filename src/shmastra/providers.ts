@@ -30,6 +30,11 @@ export const findAvailableModel = (models: string[]) =>
 export const getAvailableModel = (models: string[], defaultModel = models[0]) =>
     findAvailableModel(models) || defaultModel;
 
+export const getAvailableModels = (models: string[]) => {
+    const available = models.filter(m => AVAILABLE_MODELS.includes(m));
+    return available.length ? available : [models[0]];
+};
+
 export const getAgentModel = (key: keyof typeof AGENT_MODELS) =>
-    getAvailableModel(AGENT_MODELS[key])
+    getAvailableModels(AGENT_MODELS[key]).map(model => ({model, maxRetries: 1}))
 

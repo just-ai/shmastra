@@ -96,16 +96,16 @@ describe('getAvailableModel', () => {
 describe('getAgentModel', () => {
     it('resolves the "fast" tier to a model whose provider is available', async () => {
         const { getAgentModel } = await loadProviders({ OPENAI_API_KEY: 'x' })
-        expect(getAgentModel('fast')).toBe('openai/gpt-5.4-nano')
+        expect(getAgentModel('fast')).toEqual([{ model: 'openai/gpt-5.4-nano', maxRetries: 1 }])
     })
 
     it('resolves the "general" tier', async () => {
         const { getAgentModel } = await loadProviders({ ANTHROPIC_API_KEY: 'x' })
-        expect(getAgentModel('general')).toBe('anthropic/claude-sonnet-4-6')
+        expect(getAgentModel('general')).toEqual([{ model: 'anthropic/claude-sonnet-4-6', maxRetries: 1 }])
     })
 
     it('resolves the "best" tier', async () => {
         const { getAgentModel } = await loadProviders({ GOOGLE_GENERATIVE_AI_API_KEY: 'g' })
-        expect(getAgentModel('best')).toBe('google/gemini-3-pro-preview')
+        expect(getAgentModel('best')).toEqual([{ model: 'google/gemini-3-pro-preview', maxRetries: 1 }])
     })
 })

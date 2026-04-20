@@ -27,7 +27,7 @@ export const mastraClientTools = {
 export const mastraClientAgent: HarnessSubagent = {
     id: "mastra",
     name: "Mastra",
-    defaultModelId: getAgentModel("best"),
+    defaultModelId: getAgentModel("best")[0].model,
     tools: mastraClientTools,
     description: "An agent that can inspect and operate other Mastra agents and workflows: list them, read details, execute, view threads, run workflows, and query observability metrics (tokens, cost, latency).",
     instructions: `You interact with the Mastra platform via tools. Your output format is strict:
