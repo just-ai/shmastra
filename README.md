@@ -1,5 +1,7 @@
 # 🔥 Shmastra
 
+[![Tests](https://github.com/just-ai/shmastra/actions/workflows/test.yml/badge.svg)](https://github.com/just-ai/shmastra/actions/workflows/test.yml)
+
 > Vibe-code AI agents and workflows right inside Mastra Studio — no IDE, no config, just chat.
 
 [Mastra](https://mastra.ai) is brilliant — if you write TypeScript.
