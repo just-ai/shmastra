@@ -252,6 +252,8 @@ function installSetEnvVars(harness: ShmastraHarness) {
                     value = value.slice(1, -1).replace(/\\(.)/g, (_, c) =>
                         c === 'n' ? '\n' : c === 'r' ? '\r' : c
                     );
+                } else {
+                    value = value.replace(/\s+#.*$/, '');
                 }
                 existing[match[1].trim()] = value;
             }
