@@ -241,26 +241,11 @@ function installSetEnvVars(harness: ShmastraHarness) {
     }
 
     harness.setEnvVars = vars => {
-        let existing: Record<string, string> = {};
-        if (fs.existsSync(envPath)) {
-            const content = fs.readFileSync(envPath, 'utf-8');
-            for (const line of content.split('\n')) {
-                const match = line.match(/^([^#=]+)=(.*)$/);
-                if (!match) continue;
-                let value = match[2].trim();
-                if (value.startsWith('"') && value.endsWith('"') && value.length >= 2) {
-                    value = value.slice(1, -1).replace(/\\(.)/g, (_, c) =>
-                        c === 'n' ? '\n' : c === 'r' ? '\r' : c
-                    );
-                } else {
-                    value = value.replace(/\s+#.*$/, '');
-                }
-                existing[match[1].trim()] = value;
-            }
-        }
-        const merged = { ...existing, ...vars };
+        type Segment = { kind: 'raw', text: string } | { kind: 'kv', key: string, value: string };
+
         const validKey = (k: string) =>
             /^[A-Za-z_][A-Za-z0-9_]*$/.test(k) && k !== 'undefined' && k !== 'null';
+
         const formatValue = (raw: string) => {
             if (/[\n\r"\\#]|^\s|\s$/.test(raw)) {
                 const escaped = raw
@@ -272,14 +257,54 @@ function installSetEnvVars(harness: ShmastraHarness) {
             }
             return raw;
         };
-        const content = Object.entries(merged)
-            .filter(([k, v]) => v != null && validKey(k))
-            .map(([k, v]) => `${k}=${formatValue(String(v))}`)
-            .join('\n') + '\n';
+
+        const segments: Segment[] = [];
+        const seenKeys = new Set<string>();
+        if (fs.existsSync(envPath)) {
+            const content = fs.readFileSync(envPath, 'utf-8');
+            const body = content.endsWith('\n') ? content.slice(0, -1) : content;
+            const lines = body.length ? body.split('\n') : [];
+            for (const line of lines) {
+                const match = line.match(/^([^#=]+)=(.*)$/);
+                if (!match) { segments.push({ kind: 'raw', text: line }); continue; }
+                const key = match[1].trim();
+                let value = match[2].trim();
+                if (value.startsWith('"') && value.endsWith('"') && value.length >= 2) {
+                    value = value.slice(1, -1).replace(/\\(.)/g, (_, c) =>
+                        c === 'n' ? '\n' : c === 'r' ? '\r' : c
+                    );
+                } else {
+                    value = value.replace(/\s+#.*$/, '');
+                }
+                if (seenKeys.has(key)) continue;
+                seenKeys.add(key);
+                segments.push({ kind: 'kv', key, value });
+            }
+        }
+
+        const output: Segment[] = [];
+        const written = new Set<string>();
+        for (const seg of segments) {
+            if (seg.kind === 'raw') { output.push(seg); continue; }
+            if (!validKey(seg.key)) continue;
+            const hasOverride = Object.prototype.hasOwnProperty.call(vars, seg.key);
+            if (hasOverride && vars[seg.key] == null) continue;
+            const value = hasOverride ? String(vars[seg.key]) : seg.value;
+            output.push({ kind: 'kv', key: seg.key, value });
+            written.add(seg.key);
+        }
+        for (const [k, v] of Object.entries(vars)) {
+            if (written.has(k) || v == null || !validKey(k)) continue;
+            output.push({ kind: 'kv', key: k, value: String(v) });
+        }
+
+        const content = output.map(seg =>
+            seg.kind === 'raw' ? seg.text : `${seg.key}=${formatValue(seg.value)}`
+        ).join('\n') + (output.length ? '\n' : '');
 
         fs.writeFileSync(envPath, content, 'utf-8');
         for (const [k, v] of Object.entries(vars)) {
-            process.env[k] = String(v);
+            if (v != null) process.env[k] = String(v);
         }
         promise.resolve(Object.keys(vars));
     }
