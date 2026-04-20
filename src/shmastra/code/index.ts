@@ -257,7 +257,8 @@ function installSetEnvVars(harness: ShmastraHarness) {
             }
         }
         const merged = { ...existing, ...vars };
-        const validKey = /^[A-Za-z_][A-Za-z0-9_]*$/;
+        const validKey = (k: string) =>
+            /^[A-Za-z_][A-Za-z0-9_]*$/.test(k) && k !== 'undefined' && k !== 'null';
         const formatValue = (raw: string) => {
             if (/[\n\r"\\#]|^\s|\s$/.test(raw)) {
                 const escaped = raw
@@ -270,7 +271,7 @@ function installSetEnvVars(harness: ShmastraHarness) {
             return raw;
         };
         const content = Object.entries(merged)
-            .filter(([k, v]) => v != null && validKey.test(k))
+            .filter(([k, v]) => v != null && validKey(k))
             .map(([k, v]) => `${k}=${formatValue(String(v))}`)
             .join('\n') + '\n';
 
