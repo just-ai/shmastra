@@ -80,6 +80,10 @@ describe('isGitignored', () => {
         expect(isGitignored('vitest.config.ts', ['vitest.config.ts'])).toBe(false)
     })
 
+    it('treats .husky/ as always-kept (sync exclusion)', () => {
+        expect(isGitignored('.husky/pre-commit', ['.husky'])).toBe(false)
+    })
+
     it('returns false for empty pattern list', () => {
         expect(isGitignored('any/path.ts', [])).toBe(false)
     })

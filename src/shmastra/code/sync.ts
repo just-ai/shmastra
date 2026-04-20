@@ -3,7 +3,7 @@ import * as path from 'node:path'
 import {findProjectRoot, getWorkdir} from "../files";
 
 // Items never copied to tmp (always excluded from sync)
-const SKIP_COPY = new Set(['README.md', 'AGENTS.md', 'CLAUDE.md', '.git', '.gitignore', '.claude', 'test', 'vitest.config.ts'])
+const SKIP_COPY = new Set(['README.md', 'AGENTS.md', 'CLAUDE.md', '.git', '.gitignore', '.claude', 'test', 'vitest.config.ts', '.husky'])
 
 // Items never deleted from dst, and never treated as gitignored
 const ALWAYS_KEEP = new Set(['.env', 'node_modules', ...SKIP_COPY])

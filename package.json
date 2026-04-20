@@ -13,7 +13,8 @@
     "init-workdir": "npx tsx scripts/init-workdir.ts",
     "install-browsers": "npx tsx scripts/install-browsers.ts",
     "dry-run": "npx tsx scripts/dry-run.ts",
-    "update-lockfile": "npm install --package-lock-only"
+    "update-lockfile": "npm install --package-lock-only",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -66,6 +67,7 @@
     "@types/stream-json": "^1.7.8",
     "esbuild": "^0.28.0",
     "execa": "^9.6.1",
+    "husky": "^9.1.7",
     "mastra": "^1.6.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
