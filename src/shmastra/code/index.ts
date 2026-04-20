@@ -13,6 +13,7 @@ import {copyProjectToWorkdir, copyWorkdirToProject} from "./sync";
 import {patchInstructions} from "./instructions";
 import {createApplyChangesTool} from "./tools/apply-changes";
 import {createAskEnvVarsTool} from "./tools/ask-env-vars-args";
+import {updateEnvContent} from "./env-file";
 import {ShmastraCode, ShmastraHarness, ShmastraProvider} from "./types";
 import {queryDocumentsTool} from "../rag";
 import {Agent} from "@mastra/core/agent";
@@ -241,68 +242,8 @@ function installSetEnvVars(harness: ShmastraHarness) {
     }
 
     harness.setEnvVars = vars => {
-        type Segment = { kind: 'raw', text: string } | { kind: 'kv', key: string, value: string };
-
-        const validKey = (k: string) =>
-            /^[A-Za-z_][A-Za-z0-9_]*$/.test(k) && k !== 'undefined' && k !== 'null';
-
-        const formatValue = (raw: string) => {
-            if (/[\n\r"\\#]|^\s|\s$/.test(raw)) {
-                const escaped = raw
-                    .replace(/\\/g, '\\\\')
-                    .replace(/"/g, '\\"')
-                    .replace(/\n/g, '\\n')
-                    .replace(/\r/g, '\\r');
-                return `"${escaped}"`;
-            }
-            return raw;
-        };
-
-        const segments: Segment[] = [];
-        const seenKeys = new Set<string>();
-        if (fs.existsSync(envPath)) {
-            const content = fs.readFileSync(envPath, 'utf-8');
-            const body = content.endsWith('\n') ? content.slice(0, -1) : content;
-            const lines = body.length ? body.split('\n') : [];
-            for (const line of lines) {
-                const match = line.match(/^([^#=]+)=(.*)$/);
-                if (!match) { segments.push({ kind: 'raw', text: line }); continue; }
-                const key = match[1].trim();
-                let value = match[2].trim();
-                if (value.startsWith('"') && value.endsWith('"') && value.length >= 2) {
-                    value = value.slice(1, -1).replace(/\\(.)/g, (_, c) =>
-                        c === 'n' ? '\n' : c === 'r' ? '\r' : c
-                    );
-                } else {
-                    value = value.replace(/\s+#.*$/, '');
-                }
-                if (seenKeys.has(key)) continue;
-                seenKeys.add(key);
-                segments.push({ kind: 'kv', key, value });
-            }
-        }
-
-        const output: Segment[] = [];
-        const written = new Set<string>();
-        for (const seg of segments) {
-            if (seg.kind === 'raw') { output.push(seg); continue; }
-            if (!validKey(seg.key)) continue;
-            const hasOverride = Object.prototype.hasOwnProperty.call(vars, seg.key);
-            if (hasOverride && vars[seg.key] == null) continue;
-            const value = hasOverride ? String(vars[seg.key]) : seg.value;
-            output.push({ kind: 'kv', key: seg.key, value });
-            written.add(seg.key);
-        }
-        for (const [k, v] of Object.entries(vars)) {
-            if (written.has(k) || v == null || !validKey(k)) continue;
-            output.push({ kind: 'kv', key: k, value: String(v) });
-        }
-
-        const content = output.map(seg =>
-            seg.kind === 'raw' ? seg.text : `${seg.key}=${formatValue(seg.value)}`
-        ).join('\n') + (output.length ? '\n' : '');
-
-        fs.writeFileSync(envPath, content, 'utf-8');
+        const existing = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+        fs.writeFileSync(envPath, updateEnvContent(existing, vars), 'utf-8');
         for (const [k, v] of Object.entries(vars)) {
             if (v != null) process.env[k] = String(v);
         }
