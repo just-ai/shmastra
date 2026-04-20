@@ -17,9 +17,14 @@ npm run build          # Production build (mastra build)
 npm run start          # Start production server (mastra start)
 npm run init-workdir   # Initialize working directory (npx tsx scripts/init-workdir.ts)
 npm run install-browsers # Install Chromium Headless Shell for Playwright
+npm test               # Run unit tests (Vitest, pure helpers)
+npm run test:watch     # Watch mode
+npm run test:cov       # Coverage report into coverage/
 ```
 
-No test suite exists yet (`npm test` is a no-op).
+Unit tests live under `test/` and mirror `src/shmastra/` (e.g. `test/code/sync.test.ts`). They cover pure helpers only (parsers, validators, fallback logic) — no LLM, subprocess, or heavy fs I/O. The `test/` directory, `vitest.config.ts`, and `.husky/` are excluded from the workdir sync via `SKIP_COPY` in `src/shmastra/code/sync.ts`.
+
+A Husky `pre-push` hook runs `npm test` before every push; the same suite runs in GitHub Actions (`.github/workflows/test.yml`) on push and pull requests.
 
 ## Architecture
 

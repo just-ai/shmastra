@@ -13,3 +13,4 @@ files
 .netlify
 .vercel
 .DS_Store
+coverage
