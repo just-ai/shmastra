@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "dev": "mastra dev",
     "build": "mastra build",
     "start": "mastra start",
@@ -60,13 +61,14 @@
     ]
   },
   "devDependencies": {
+    "@ast-grep/napi": "^0.40.5",
     "@types/node": "^25.3.0",
     "@types/stream-json": "^1.7.8",
     "esbuild": "^0.28.0",
+    "execa": "^9.6.1",
     "mastra": "^1.6.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "execa": "^9.6.1",
-    "@ast-grep/napi": "^0.40.5"
+    "vitest": "^4.1.4"
   }
 }

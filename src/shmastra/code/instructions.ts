@@ -18,7 +18,7 @@ export function extractSection(text: string, heading: string) {
     return text.slice(startIdx, endIdx);
 }
 
-function systemMessageToString(instructions: SystemMessage): string {
+export function systemMessageToString(instructions: SystemMessage): string {
     if (typeof instructions === "string") return instructions;
     if (Array.isArray(instructions)) {
         return instructions.map(i => typeof i === "string" ? i : i.content).join("\n");

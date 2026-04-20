@@ -36,10 +36,9 @@ export async function getPublicUrl() {
     return _publicUrl;
 }
 
-export function parseEnv(): Record<string, string> {
-    if (!existsSync(envPath)) return {}
+export function parseEnvContent(content: string): Record<string, string> {
     return Object.fromEntries(
-        readFileSync(envPath, 'utf8')
+        content
             .split('\n')
             .filter(l => l.includes('=') && !l.trim().startsWith('#'))
             .map(l => {
@@ -47,6 +46,11 @@ export function parseEnv(): Record<string, string> {
                 return [l.slice(0, idx).trim(), l.slice(idx + 1).trim()]
             })
     )
+}
+
+export function parseEnv(): Record<string, string> {
+    if (!existsSync(envPath)) return {}
+    return parseEnvContent(readFileSync(envPath, 'utf8'))
 }
 
 export function writeEnvKey(key: string, value: string) {
