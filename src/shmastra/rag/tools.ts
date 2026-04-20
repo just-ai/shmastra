@@ -21,15 +21,15 @@ const MARKITDOWN_EXTENSIONS = new Set([
 
 const SUPPORTED_EXTENSIONS = new Set([...IMAGE_EXTENSIONS, ...MARKITDOWN_EXTENSIONS]);
 
-function getFileExtension(filename: string): string {
+export function getFileExtension(filename: string): string {
     return filename.split('.').pop()?.toLowerCase() ?? '';
 }
 
-function isImageFile(filename: string): boolean {
+export function isImageFile(filename: string): boolean {
     return IMAGE_EXTENSIONS.has(getFileExtension(filename));
 }
 
-function assertSupportedFile(filename: string) {
+export function assertSupportedFile(filename: string) {
     const ext = getFileExtension(filename);
     if (!ext || !SUPPORTED_EXTENSIONS.has(ext)) {
         throw new Error(

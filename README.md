@@ -1,5 +1,7 @@
 # 🔥 Shmastra
 
+[![Tests](https://github.com/just-ai/shmastra/actions/workflows/test.yml/badge.svg)](https://github.com/just-ai/shmastra/actions/workflows/test.yml)
+
 > Vibe-code AI agents and workflows right inside Mastra Studio — no IDE, no config, just chat.
 
 [Mastra](https://mastra.ai) is brilliant — if you write TypeScript.
@@ -37,3 +39,15 @@ Shmastra lets **anyone** — engineers or not — vibe-code agents and entire wo
 - 📱 **App builder** — generates standalone web apps for your agents and workflows, served directly from Mastra Studio
 - 🔐 **Zero-key OAuth** — log in with your existing Anthropic or OpenAI subscription instead of managing API keys
 - 🖼️ **Rich chat extras** — renders iframes for generated HTML, perfect for interactive charts, dashboards, or landing pages your agent creates
+
+## Development
+
+```shell
+npm test            # Run unit tests once
+npm run test:watch  # Watch mode
+npm run test:cov    # Coverage report (text + HTML in coverage/)
+```
+
+Tests live under `test/` and mirror `src/shmastra/`. The suite covers pure helpers only — parsers, validators, fallback logic — without touching LLM, subprocess, or heavy fs I/O.
+
+A Husky `pre-push` hook runs `npm test` before every push, and the same suite runs in GitHub Actions on push and pull requests.

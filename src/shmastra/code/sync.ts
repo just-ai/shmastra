@@ -3,7 +3,7 @@ import * as path from 'node:path'
 import {findProjectRoot, getWorkdir} from "../files";
 
 // Items never copied to tmp (always excluded from sync)
-const SKIP_COPY = new Set(['README.md', 'AGENTS.md', 'CLAUDE.md', '.git', '.gitignore', '.claude'])
+const SKIP_COPY = new Set(['README.md', 'AGENTS.md', 'CLAUDE.md', '.git', '.gitignore', '.claude', 'test', 'vitest.config.ts', '.husky'])
 
 // Items never deleted from dst, and never treated as gitignored
 const ALWAYS_KEEP = new Set(['.env', 'node_modules', ...SKIP_COPY])
@@ -86,21 +86,28 @@ async function syncNodeModules(src: string, dst: string): Promise<NodeModulesSta
 }
 
 /**
- * Parse .gitignore patterns from a file, returning a list of pattern strings.
+ * Parse .gitignore text content into a list of pattern strings.
  */
-function parseGitignore(gitignorePath: string): string[] {
-    if (!fs.existsSync(gitignorePath)) return []
-    return fs.readFileSync(gitignorePath, 'utf8')
+export function parseGitignoreContent(content: string): string[] {
+    return content
         .split('\n')
         .map(line => line.trim())
         .filter(line => line.length > 0 && !line.startsWith('#'))
 }
 
 /**
+ * Parse .gitignore patterns from a file, returning a list of pattern strings.
+ */
+export function parseGitignore(gitignorePath: string): string[] {
+    if (!fs.existsSync(gitignorePath)) return []
+    return parseGitignoreContent(fs.readFileSync(gitignorePath, 'utf8'))
+}
+
+/**
  * Check if a given entry name (or relative path) matches a gitignore pattern.
  * Supports simple glob patterns with * and **.
  */
-function matchesGitignorePattern(relPath: string, pattern: string): boolean {
+export function matchesGitignorePattern(relPath: string, pattern: string): boolean {
     const normalized = pattern.endsWith('/') ? pattern.slice(0, -1) : pattern
 
     const escapedPattern = normalized
@@ -128,7 +135,7 @@ function matchesGitignorePattern(relPath: string, pattern: string): boolean {
     return false
 }
 
-function isGitignored(relPath: string, patterns: string[]): boolean {
+export function isGitignored(relPath: string, patterns: string[]): boolean {
     const topLevel = relPath.split('/')[0]
     if (ALWAYS_KEEP.has(topLevel)) return false
     return patterns.some(pattern => matchesGitignorePattern(relPath, pattern))

@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+# Regenerate lockfiles when package.json is being committed.
+# Placeholder — replace with your local logic.
+
+if git diff --cached --name-only | grep -qx 'package.json'; then
+    echo "[pre-commit] package.json changed — regenerating lockfiles"
+    npm install --package-lock-only --ignore-scripts --silent
+    pnpm install --lockfile-only --ignore-scripts --silent
+    git add package-lock.json pnpm-lock.yaml
+fi

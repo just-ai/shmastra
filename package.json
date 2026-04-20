@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
     "dev": "mastra dev",
     "build": "mastra build",
     "start": "mastra start",
@@ -12,7 +14,8 @@
     "init-workdir": "npx tsx scripts/init-workdir.ts",
     "install-browsers": "npx tsx scripts/install-browsers.ts",
     "dry-run": "npx tsx scripts/dry-run.ts",
-    "update-lockfile": "npm install --package-lock-only"
+    "update-lockfile": "npm install --package-lock-only",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -60,13 +63,16 @@
     ]
   },
   "devDependencies": {
+    "@ast-grep/napi": "^0.40.5",
     "@types/node": "^25.3.0",
     "@types/stream-json": "^1.7.8",
+    "@vitest/coverage-v8": "^4.1.4",
     "esbuild": "^0.28.0",
+    "execa": "^9.6.1",
+    "husky": "^9.1.7",
     "mastra": "^1.6.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "execa": "^9.6.1",
-    "@ast-grep/napi": "^0.40.5"
+    "vitest": "^4.1.4"
   }
 }

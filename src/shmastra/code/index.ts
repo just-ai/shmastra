@@ -13,6 +13,7 @@ import {copyProjectToWorkdir, copyWorkdirToProject} from "./sync";
 import {patchInstructions} from "./instructions";
 import {createApplyChangesTool} from "./tools/apply-changes";
 import {createAskEnvVarsTool} from "./tools/ask-env-vars-args";
+import {updateEnvContent} from "../env";
 import {ShmastraCode, ShmastraHarness, ShmastraProvider} from "./types";
 import {queryDocumentsTool} from "../rag";
 import {Agent} from "@mastra/core/agent";
@@ -241,23 +242,10 @@ function installSetEnvVars(harness: ShmastraHarness) {
     }
 
     harness.setEnvVars = vars => {
-        let existing: Record<string, string> = {};
-        if (fs.existsSync(envPath)) {
-            const content = fs.readFileSync(envPath, 'utf-8');
-            for (const line of content.split('\n')) {
-                const match = line.match(/^([^#=]+)=(.*)$/);
-                if (match) existing[match[1].trim()] = match[2].trim();
-            }
-        }
-        const merged = { ...existing, ...vars };
-        const content = Object.entries(merged)
-            .filter(([k, v]) => k != null && v != null)
-            .map(([k, v]) => `${k}=${v}`)
-            .join('\n');
-
-        fs.writeFileSync(envPath, content, 'utf-8');
+        const existing = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+        fs.writeFileSync(envPath, updateEnvContent(existing, vars), 'utf-8');
         for (const [k, v] of Object.entries(vars)) {
-            process.env[k] = String(v);
+            if (v != null) process.env[k] = String(v);
         }
         promise.resolve(Object.keys(vars));
     }
