@@ -87,8 +87,9 @@ It is MANDATORY to make your changes appear in Mastra Studio for user.
 **DO NOT build project with `npm run build` - use `apply_changes` tool instead**
 
 IMPORTANT: if `apply_changes` returns error - fix it and call `apply_changes` again until you fix all errors.
+`success: false` flag means that there is an error even if `error` field doesn't contain actual error message.
 
-Note that `apply_changes` is async, meaning that changes will be applied in a couple of seconds.
+Note that `apply_changes` is async, meaning that changes will be applied in a couple of seconds AFTER YOUR LAST RESPONSE IN CONVERSATION.
 You have to finish your conversation right after calling this tool with summary of tasks you've completed.
 
 ## Packages installation

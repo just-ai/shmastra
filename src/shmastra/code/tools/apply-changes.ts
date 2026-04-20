@@ -1,7 +1,7 @@
 import {createTool} from "@mastra/core/tools";
 import {ShmastraProvider} from "../types";
 import {getWorkdir} from "../../files";
-import {dryRun} from "../../../../scripts/dry-run";
+import {dryRun, DryRunTimeoutError} from "../../../../scripts/dry-run";
 
 export const createApplyChangesTool = (provider: ShmastraProvider) =>
     createTool({
@@ -12,7 +12,10 @@ export const createApplyChangesTool = (provider: ShmastraProvider) =>
                 await dryRun(getWorkdir(), { silent: true });
                 provider.harness.applyChanges();
             } catch (e) {
-                return { success: false, error: e }
+                if (e instanceof DryRunTimeoutError) {
+                    return { success: false, error: `[TIMEOUT] ${e.message}\n${e.output}` };
+                }
+                return { success: false, error: e };
             }
             return { success: true };
         }

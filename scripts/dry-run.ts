@@ -5,6 +5,13 @@ const TIMEOUT_MS = 30_000;
 const KILL_GRACE_MS = 3_000;
 const READY_PATTERN = /watching for file changes/;
 
+export class DryRunTimeoutError extends Error {
+    constructor(public readonly output: string, public readonly timeoutMs: number) {
+        super(`Dry run timed out after ${timeoutMs}ms`);
+        this.name = "DryRunTimeoutError";
+    }
+}
+
 function killGroup(pid: number, signal: NodeJS.Signals) {
     try {
         process.kill(-pid, signal);
@@ -102,7 +109,17 @@ export function runCommand(command: string, args: string[], timeoutMs: number, c
             }
         });
 
-        timeoutHandle = setTimeout(() => finish(reject, output), timeoutMs);
+        timeoutHandle = setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            const pid = child.pid;
+            const err = new DryRunTimeoutError(output, timeoutMs);
+            if (pid && liveChildren.has(pid)) {
+                terminate(pid).then(() => reject(err));
+            } else {
+                reject(err);
+            }
+        }, timeoutMs);
     });
 }
 
