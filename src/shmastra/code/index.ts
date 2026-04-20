@@ -13,7 +13,7 @@ import {copyProjectToWorkdir, copyWorkdirToProject} from "./sync";
 import {patchInstructions} from "./instructions";
 import {createApplyChangesTool} from "./tools/apply-changes";
 import {createAskEnvVarsTool} from "./tools/ask-env-vars-args";
-import {updateEnvContent} from "./env-file";
+import {updateEnvContent} from "../env";
 import {ShmastraCode, ShmastraHarness, ShmastraProvider} from "./types";
 import {queryDocumentsTool} from "../rag";
 import {Agent} from "@mastra/core/agent";
