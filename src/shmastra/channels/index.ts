@@ -118,7 +118,7 @@ const handleTextMessage: ChannelHandler = async (thread, message, defaultHandler
         .filter(a => !a.url?.startsWith("http"));
 
     const post = thread.post.bind(thread);
-    thread.post = async (message) => {
+    thread.post = async (message: any) => {
         if ((message as any).type === "card") {
             const children = (message as any).children as any[];
             const hasToolCall = children?.some(

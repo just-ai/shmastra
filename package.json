@@ -35,7 +35,7 @@
     "@mastra/agent-browser": "^0.2.0",
     "@mastra/ai-sdk": "^1.4.0",
     "@mastra/client-js": "^1.13.4",
-    "@mastra/core": "^1.25.0",
+    "@mastra/core": "^1.26.0-alpha.8",
     "@mastra/duckdb": "^1.1.2",
     "@mastra/evals": "^1.2.1",
     "@mastra/libsql": "^1.8.1",
