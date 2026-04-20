@@ -156,14 +156,18 @@ export const myCustomTool = createTool({
     outputSchema: z.object({
         ...
     }),
-    execute: async (args: MyCustomToolArgs, context) => {
+    execute: async (inputData: MyCustomToolArgs, context) => {
       ...
     }
 });
 ```
 
+
+IMPORTANT: do not use old signature of `execute()` method like `execute: async ({context}) => {}` - it is wrong!
+Use `execute: async (inputData, context) => {}` signature. Where `inputData` is tool call arguments, and `context` is Mastra context of tool call.
+
 `context` has a type of `ToolExecutionContext` with next _optional_ props: `mastra`, `requestContext`, `abortSignal`, `workspace` and others.
-Learn more about context and tools in embedded mastra docs.
+Learn more about context and tools in embedded Mastra docs: [`docs-agents-using-tools.md`](node_modules/@mastra/core/dist/docs/references/docs-agents-using-tools.md).
 
 ### MCP tools
 
