@@ -246,7 +246,14 @@ function installSetEnvVars(harness: ShmastraHarness) {
             const content = fs.readFileSync(envPath, 'utf-8');
             for (const line of content.split('\n')) {
                 const match = line.match(/^([^#=]+)=(.*)$/);
-                if (match) existing[match[1].trim()] = match[2].trim();
+                if (!match) continue;
+                let value = match[2].trim();
+                if (value.startsWith('"') && value.endsWith('"') && value.length >= 2) {
+                    value = value.slice(1, -1).replace(/\\(.)/g, (_, c) =>
+                        c === 'n' ? '\n' : c === 'r' ? '\r' : c
+                    );
+                }
+                existing[match[1].trim()] = value;
             }
         }
         const merged = { ...existing, ...vars };
