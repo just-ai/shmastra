@@ -250,10 +250,22 @@ function installSetEnvVars(harness: ShmastraHarness) {
             }
         }
         const merged = { ...existing, ...vars };
+        const validKey = /^[A-Za-z_][A-Za-z0-9_]*$/;
+        const formatValue = (raw: string) => {
+            if (/[\n\r"\\#]|^\s|\s$/.test(raw)) {
+                const escaped = raw
+                    .replace(/\\/g, '\\\\')
+                    .replace(/"/g, '\\"')
+                    .replace(/\n/g, '\\n')
+                    .replace(/\r/g, '\\r');
+                return `"${escaped}"`;
+            }
+            return raw;
+        };
         const content = Object.entries(merged)
-            .filter(([k, v]) => k != null && v != null)
-            .map(([k, v]) => `${k}=${v}`)
-            .join('\n');
+            .filter(([k, v]) => v != null && validKey.test(k))
+            .map(([k, v]) => `${k}=${formatValue(String(v))}`)
+            .join('\n') + '\n';
 
         fs.writeFileSync(envPath, content, 'utf-8');
         for (const [k, v] of Object.entries(vars)) {
