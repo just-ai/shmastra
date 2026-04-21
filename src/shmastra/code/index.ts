@@ -1,5 +1,6 @@
 import { createMastraCode } from 'mastracode'
 import * as fs from 'fs'
+import * as os from 'os'
 import * as path from 'path'
 
 import { OBSERVER_MODELS, DEVELOPER_MODELS, findAvailableModel } from '../providers'
@@ -140,7 +141,10 @@ function restrictSkillPaths(harness: ShmastraHarness) {
     const originalWorkspaceFn = (harness as any).workspaceFn;
     if (typeof originalWorkspaceFn !== 'function') return;
 
-    const allowedSkillPaths = [path.join(process.cwd(), '.mastracode', 'skills')];
+    const allowedSkillPaths = [
+        path.join(process.cwd(), '.mastracode', 'skills'),
+        path.join(os.homedir(), '.mastracode', 'skills'),
+    ];
 
     (harness as any).workspaceFn = function (this: any, ...args: any[]) {
         const result = originalWorkspaceFn.apply(this, args);

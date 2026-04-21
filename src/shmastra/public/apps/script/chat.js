@@ -26,7 +26,7 @@ try {
   marked.setOptions({ breaks: true, gfm: true });
   const embedHtml = (html) => html.replace(
     /<a\s+href="(\/[^"]+\.html)"([^>]*)>([^<]*)<\/a>/g,
-    (match, url, attrs, text) =>
+    (match, url) =>
       `${match}<iframe class="sc-embed" src="${url}" loading="lazy"></iframe>`
   );
   md = (t) => { try { return embedHtml(marked.parse(t)); } catch { return t; } };
