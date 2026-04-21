@@ -3,6 +3,7 @@ import { createUIMessageStream, createUIMessageStreamResponse } from "ai";
 import {ShmastraCode} from "../code";
 import {Handler} from "hono";
 import {resolveFileUrl} from "../files";
+import {RequestContext} from "@mastra/core/request-context";
 
 type FilePart = {
   type: "file";
@@ -15,8 +16,9 @@ export const chatHandler = (code: ShmastraCode): Handler => {
   return async c => {
     const signal = c.req.raw.signal;
     const referer = c.req.header('referer');
-    const path = c.req.header('x-mastra-path') ?? (referer ? new URL(referer).pathname : "/");
-    const { messages, modelId, threadId } = await c.req.json();
+    const { messages, modelId, threadId, path: bodyPath, timezone } = await c.req.json();
+    const path = bodyPath && bodyPath !== "/" ? bodyPath : (referer ? new URL(referer).pathname : "/");
+
     const message = messages[messages.length - 1];
 
     const files: FilePart[] = message.parts
@@ -47,8 +49,12 @@ export const chatHandler = (code: ShmastraCode): Handler => {
       await code.harness.switchModel({modelId, scope: "thread"});
     }
 
+    const requestContext = new RequestContext();
+    requestContext.set("timezone", timezone);
+
     const stream = await code.harness.streamMessage({
       content,
+      requestContext,
       files: imageUrls.map((data, i) => ({ ...images[i], data }))
     });
 

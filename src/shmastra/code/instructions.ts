@@ -43,6 +43,7 @@ export function patchInstructions(harness: Harness, config: Config) {
         let message = systemMessageToString(instructions);
         let environmentSection = extractSection(message, "# Environment");
         environmentSection = (environmentSection || "") +
+            `\nUser timezone: ${requestContext?.get("timezone") || "unknown"}` +
             `\nUpstream project root: ${projectRootPath}. Files are copying and Mastra server is running in this folder after applying changes.` +
             `\nMastra Studio Base: ${config.server?.studioBase || "/"}` +
             `\nMastra REST API prefix: ${config.server?.apiPrefix || "/api"}` +
