@@ -4,6 +4,8 @@
 
 > Vibe-code AI agents and workflows right inside Mastra Studio — no IDE, no config, just chat.
 
+[Read the docs →](https://just-ai.github.io/shmastra-docs/shmastra/)
+
 [Mastra](https://mastra.ai) is brilliant — if you write TypeScript.
 Shmastra brings that power to **everyone**.
 
@@ -33,6 +35,8 @@ Shmastra lets **anyone** — engineers or not — vibe-code agents and entire wo
 - ♻️ **Self-healing builds** — creates agents & workflows, rebuilds and hot-reloads changes automatically
 - 🔍 **Inspect & fix** — navigate to any agent or workflow page and ask Shmastra to debug it
 - 🔌 **Auto-discover integrations** — searches and connects MCP servers or third-party services to your agents and workflows on the fly
+- 📡 **Channels** — connect agents to Telegram, Slack, Discord, WhatsApp, Teams, and Email
+- 🧩 **Composio Toolkits** — 200+ ready-to-use integrations (Gmail, Drive, GitHub, Notion, Stripe, and more)
 - 🔑 **One-click OAuth** — authorizes you with any external service that requires OAuth
 - 📁 **First-class file handling** — no base64 hacks; files are saved to disk with temporary public URLs generated when running on localhost
 - 🧠 **Built-in RAG + browser** — agents get markitdown-powered RAG, a Playwright browser, and automatic web search via your chosen LLM provider
@@ -47,7 +51,3 @@ npm test            # Run unit tests once
 npm run test:watch  # Watch mode
 npm run test:cov    # Coverage report (text + HTML in coverage/)
 ```
-
-Tests live under `test/` and mirror `src/shmastra/`. The suite covers pure helpers only — parsers, validators, fallback logic — without touching LLM, subprocess, or heavy fs I/O.
-
-A Husky `pre-push` hook runs `npm test` before every push, and the same suite runs in GitHub Actions on push and pull requests.

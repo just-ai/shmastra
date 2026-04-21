@@ -22,7 +22,7 @@ export const createMastra = async (config: Config) => {
       port: isDryRun ? undefined : (config.server?.port || port),
       cors: config.server?.cors || (process.env.CORS_ORIGIN ? {
         origin: process.env.CORS_ORIGIN.split(' ').map(s => s.trim()).filter(Boolean),
-        allowHeaders: ["Content-Type", "Authorization", "x-mastra-auth-token", "x-mastra-client-type", "x-mastra-path"],
+        allowHeaders: ["Content-Type", "Authorization", "x-mastra-auth-token", "x-mastra-client-type"],
         credentials: true,
       } : undefined),
       auth: config.server?.auth || (process.env.MASTRA_AUTH_TOKEN ? new SimpleAuth({
