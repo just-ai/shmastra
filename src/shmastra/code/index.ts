@@ -54,7 +54,7 @@ export async function createShmastraCode(config: Config): Promise<ShmastraCode> 
         });
     }
 
-    const { harness, authStorage, ...code } = await createMastraCode({
+    const { harness, authStorage, mcpManager, ...code } = await createMastraCode({
         cwd,
         subagents: [
             mastraClientAgent
@@ -97,9 +97,10 @@ export async function createShmastraCode(config: Config): Promise<ShmastraCode> 
     provider.init(sh);
 
     await harness.init();
+    await mcpManager?.init();
     await initModels(sh);
 
-    return { ...code, authStorage, harness: sh };
+    return { ...code, mcpManager, authStorage, harness: sh };
 }
 
 async function initModels(harness: Harness) {
