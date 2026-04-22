@@ -7,9 +7,9 @@ const AVAILABLE_MODELS = Object.entries(PROVIDER_REGISTRY).flatMap(([id, provide
 })
 
 export const AGENT_MODELS = {
-    fast: ['openai/gpt-5.4-nano', 'google/gemini-3.1-flash-lite-preview', 'anthropic/claude-haiku-4-5'],
+    fast: ['openai/gpt-5.4-nano', 'google/gemini-3.1-flash-lite-preview', 'anthropic/claude-sonnet-4-6'],
     general: ['openai/gpt-5.4-mini', 'google/gemini-3-flash-preview', 'anthropic/claude-sonnet-4-6'],
-    best: ['openai/gpt-5.4', 'google/gemini-3-pro-preview', 'anthropic/claude-sonnet-4-6'],
+    best: ['openai/gpt-5.4', 'google/gemini-3-pro-preview', 'anthropic/claude-opus-4-7'],
 }
 
 export const OBSERVER_MODELS = [
@@ -20,7 +20,7 @@ export const OBSERVER_MODELS = [
 
 export const DEVELOPER_MODELS = [
     'openai/gpt-5.4',
-    'anthropic/claude-opus-4-6',
+    'anthropic/claude-opus-4-7',
     'google/gemini-3.1-pro-preview',
 ]
 
