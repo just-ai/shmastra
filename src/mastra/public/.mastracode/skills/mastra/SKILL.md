@@ -281,6 +281,22 @@ If your workflow requires an input files, describe its schema next way:
 2. Once is running - it receives a filename in this field that is stored inside "files" folder
 3. You can use `getLocalFilePath(filaname)` then to obtain full path for this file if your workflow needs it
 
+### Custom workflow step
+
+IMPORTANT: use proper signature for `execute` in workflow step:
+
+```
+export const sendToTelegram = createStep({
+   ...
+   execute: async ({ inputData, mastra, ... }) => {
+      ...
+   }
+})
+```
+
+`execute` function accepts arg of type `ExecuteParams`.
+Learn more in [Workflows overview](node_modules/@mastra/core/dist/docs/references/docs-workflows-overview.md)
+
 ### Agents and tools as a workflow step
 
 Note that you can use any agent or tool as step in your workflows using `createAgentStep()`:
