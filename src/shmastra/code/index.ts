@@ -98,6 +98,11 @@ export async function createShmastraCode(config: Config): Promise<ShmastraCode> 
 
     await harness.init();
     await mcpManager?.init();
+
+    if (!mcpManager?.hasServers()) {
+        console.log("No MCP servers available");
+    }
+
     await initModels(sh);
 
     return { ...code, mcpManager, authStorage, harness: sh };
