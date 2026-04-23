@@ -4,6 +4,9 @@ import {isDevMode, isDryRun} from "./env";
 import {withShmastraMiddlewares, withShmastraRoutes} from "./handlers";
 import {patchAgentStream} from "./utils";
 import {SimpleAuth} from "@mastra/core/server";
+import {installBaseUrlGateway} from "./gateway";
+
+installBaseUrlGateway();
 
 const port = parseInt(process.env.PORT || "4111");
 
