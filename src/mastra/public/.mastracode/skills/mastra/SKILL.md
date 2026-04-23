@@ -277,7 +277,7 @@ For example, if creating workflow named "testWorkflow":
 
 If your workflow requires an input files, describe its schema next way:
 
-1. Add to workflow zod schema a string field with name starting with prefix "file_field_" (IT IS MANDATORY)
+1. Add to workflow zod schema a string field with name starting with prefix `file_field_` (IT IS MANDATORY)
 2. Once is running - it receives a filename in this field that is stored inside "files" folder
 3. You can use `getLocalFilePath(filaname)` then to obtain full path for this file if your workflow needs it
 
@@ -297,11 +297,9 @@ export const sendToTelegram = createStep({
 `execute` function accepts arg of type `ExecuteParams`.
 Learn more in [Workflows overview](node_modules/@mastra/core/dist/docs/references/docs-workflows-overview.md)
 
-### Agents and tools as a workflow step
+### Agent as a workflow step
 
-Note that you can use any agent or tool as step in your workflows using `createAgentStep()`:
-
-Agent example:
+Note that you can use any agent as step in your workflows using `createAgentStep()`:
 
 ```
 import { testAgent } from '../agents/test-agent'
@@ -322,6 +320,26 @@ export const testWorkflow = createWorkflow({})
 ```
 
 IMPORTANT: **use only `createAgentStep` function, not standard `createStep`** because it handles agent memory workaround.
+
+#### Structured output from Agent step
+
+Pass `structuredOutput.schema` to make the step return a typed object instead of `{ text }`. The step's `outputSchema` is inferred from the zod schema.
+
+```
+import { z } from 'zod'
+import { testAgent } from '../agents/test-agent'
+import { createAgentStep } from '../shmastra';
+
+const articleSchema = z.object({
+  ...
+})
+
+const step1 = createAgentStep(testAgent, {
+  structuredOutput: { schema: articleSchema },
+})
+```
+
+### Tool as a workflow step
 
 To create step from tool, use standard mastra `createStep()`:
 
@@ -344,7 +362,7 @@ export const testWorkflow = createWorkflow({})
 
 **IMPORTANT: only tools with both of input and output zod schemas can be used as step**
 
-### How to call agent explicitly
+## How to call Agent explicitly
 
 If you explicitly call agent's `generate()` (in workflow, or via Mastra client SDK, or Mastra API), you have to pass thread and resource to memory option:
 
@@ -369,6 +387,8 @@ If you explicitly call agent's `generate()` (in workflow, or via Mastra client S
 ```
 
 Pass suitable `thread` and `resource` for each explicit `generate()` call.
+
+NOTE: prefer to create step from agent in workflows instead of explicitly call `generate()` in workflows.
 
 ## When you see errors
 
