@@ -90,7 +90,17 @@ IMPORTANT: if `apply_changes` returns error - fix it and call `apply_changes` ag
 `success: false` flag means that there is an error even if `error` field doesn't contain actual error message.
 
 Note that `apply_changes` is async, meaning that changes will be applied in a couple of seconds AFTER YOUR LAST RESPONSE IN CONVERSATION.
-You have to finish your conversation right after calling this tool with summary of tasks you've completed.
+You have to finish a conversation right after calling this tool with summary of tasks you've completed.
+
+### Apply changes notification
+
+Set `notify` param to `true` when calling `apply_changes` if you need to be notified when your changes were applied actually and Mastra server was restarted.
+You have to finish a conversation with user nevertheless to allow Mastra server to apply your changes.
+Once changes are applied - you will receive a new message to continue.
+
+**Do not await for applying changes - just set `notify` param and end a conversation with user**
+
+> You may need to be notified if you're planning to make something right after your changes were applied (for example - testing a newly created or updated agents and workflows, or reference it via ID in some other tools).
 
 ## Packages installation
 
