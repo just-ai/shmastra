@@ -98,7 +98,7 @@ Set `notify` param to `true` when calling `apply_changes` if you need to be noti
 You have to finish a conversation with user nevertheless to allow Mastra server to apply your changes.
 Once changes are applied - you will receive a new message to continue.
 
-**Do not await for applying changes - just set `notify` param and end a conversation with user**
+**Do not await for applying changes - just set `notify` param and then finish a conversation with user**
 
 > You may need to be notified if you're planning to make something right after your changes were applied (for example - testing a newly created or updated agents and workflows, or reference it via ID in some other tools).
 
