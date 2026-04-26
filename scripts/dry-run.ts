@@ -51,7 +51,7 @@ async function terminate(pid: number): Promise<void> {
     });
 }
 
-export function runCommand(command: string, args: string[], timeoutMs: number, cwd: string, successPattern?: RegExp): Promise<string> {
+export function runCommand(command: string, args: string[], timeoutMs: number, cwd: string, successPattern?: RegExp, port?: number): Promise<string> {
     return new Promise((resolve, reject) => {
         const child = spawn(command, args, {
             cwd,
@@ -60,7 +60,7 @@ export function runCommand(command: string, args: string[], timeoutMs: number, c
             env: {
                 ...process.env,
                 DRY_RUN: "true",
-                PORT: "NaN",
+                PORT: port !== undefined ? String(port) : "NaN",
             },
         });
 
@@ -123,11 +123,11 @@ export function runCommand(command: string, args: string[], timeoutMs: number, c
     });
 }
 
-export async function dryRun(cwd: string, opts?: { silent?: boolean }) {
+export async function dryRun(cwd: string, opts?: { silent?: boolean; port?: number }) {
     silent = opts?.silent ?? false;
     const pm = getPackageManager();
     await runCommand(pm, ["install", "--ignore-scripts"], TIMEOUT_MS, cwd);
-    await runCommand(pm, ["run", "dev"], TIMEOUT_MS, cwd, READY_PATTERN);
+    await runCommand(pm, ["run", "dev"], TIMEOUT_MS, cwd, READY_PATTERN, opts?.port);
 }
 
 async function shutdownAll() {
@@ -140,6 +140,8 @@ if (process.argv[1]?.includes("dry-run")) {
     const cwdArg = process.argv.find(a => a.startsWith("--cwd="))?.slice(6);
     const cwd = cwdArg ? path.resolve(cwdArg) : process.cwd();
     const isSilent = process.argv.includes("--silent");
+    const portArg = process.argv.find(a => a.startsWith("--port="))?.slice(7);
+    const port = portArg !== undefined ? Number(portArg) : undefined;
 
     console.log(`Dry run in ${cwd}`);
 
@@ -154,7 +156,7 @@ if (process.argv[1]?.includes("dry-run")) {
     process.on("SIGTERM", onSignal);
     process.on("SIGHUP", onSignal);
 
-    dryRun(cwd, { silent: isSilent }).then(
+    dryRun(cwd, { silent: isSilent, port }).then(
         async () => {
             console.log("Dry run succeeded");
             await shutdownAll();

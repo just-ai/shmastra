@@ -9,7 +9,7 @@ import {MastraModelOutput} from "@mastra/core/stream";
 import {Harness} from "@mastra/core/harness";
 import {RequestContext} from "@mastra/core/request-context";
 import {TracingContext, TracingOptions} from "@mastra/core/observability";
-import {findProjectRoot, getStorageDir, getWorkdir} from "../files";
+import {getStorageDir, getWorkdir} from "../files";
 import {copyProjectToWorkdir, copyWorkdirToProject} from "./sync";
 import {patchInstructions} from "./instructions";
 import {createApplyChangesTool} from "./tools/apply-changes";
@@ -24,6 +24,7 @@ import {deduplicateItemIds} from "../utils";
 import connections from "../connections";
 import {connectToolkitTool, executeToolkitTool, getToolSchemaTool, searchToolkitsTool} from "../connections/tools";
 import {isDryRun} from "../env";
+import {projectRootPath} from "../../mastra/shmastra";
 
 export type {ShmastraCode, ShmastraHarness, ShmastraProvider};
 
@@ -39,8 +40,7 @@ class ShmastraProviderImpl implements ShmastraProvider {
 }
 
 export async function createShmastraCode(config: Config): Promise<ShmastraCode> {
-    const projectRoot = findProjectRoot();
-    const cwd = isDryRun ? projectRoot : await copyProjectToWorkdir();
+    const cwd = isDryRun ? projectRootPath : await copyProjectToWorkdir();
     const provider = new ShmastraProviderImpl();
 
     const omModelId = findAvailableModel(OBSERVER_MODELS);
@@ -54,7 +54,7 @@ export async function createShmastraCode(config: Config): Promise<ShmastraCode> 
         });
     }
 
-    const { harness, authStorage, ...code } = await createMastraCode({
+    const { harness, authStorage, mcpManager, ...code } = await createMastraCode({
         cwd,
         subagents: [
             mastraClientAgent
@@ -97,9 +97,15 @@ export async function createShmastraCode(config: Config): Promise<ShmastraCode> 
     provider.init(sh);
 
     await harness.init();
+    await mcpManager?.init();
+
+    if (mcpManager?.hasServers()) {
+        console.log(`${mcpManager?.getServerStatuses().length} MCP servers are configured`);
+    }
+
     await initModels(sh);
 
-    return { ...code, authStorage, harness: sh };
+    return { ...code, mcpManager, authStorage, harness: sh };
 }
 
 async function initModels(harness: Harness) {
@@ -221,7 +227,10 @@ function installApplyChanges(harness: ShmastraHarness) {
     });
 
     harness.applyChanges = () => {
+        const version = new Date().getTime().toString();
+        fs.writeFileSync(path.resolve(projectRootPath, '.version'), version, 'utf8');
         applyChanges = true;
+        return version;
     }
 }
 

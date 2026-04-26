@@ -34,6 +34,17 @@ A Husky `pre-push` hook runs `npm test` before every push; the same suite runs i
 
 ### Core layers
 
+### MCP scheduler integration (cloud-only)
+
+When deployed under Shmastra Cloud, the hosting layer injects
+`/home/user/.mastracode/mcp.json` into the sandbox. That file points
+mastracode at the cloud's `/api/mcp` endpoint with a virtual-key bearer
+token, exposing scheduler tools (`list_schedules`, `create_schedule`,
+`update_schedule`, `delete_schedule`, `list_runs`) to the coding agent.
+
+The file is **not** part of this template and must not be committed here.
+If running shmastra standalone, the scheduler tools are simply unavailable.
+
 - **`src/shmastra/`** — all Shmastra-specific logic:
   - `mastra.ts` — Mastra factory: runs wizard in dev mode, injects server config, patches agent streams for message deduplication
   - `handlers/` — Hono HTTP handlers (chat, files, threads, OAuth/Composio, env vars, streaming, apps serving, public URL detection)

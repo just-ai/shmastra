@@ -24,7 +24,7 @@ export type ShmastraHarness = Harness & {
 
     findThreadById: (threadId: string) => Promise<HarnessThread | undefined>;
 
-    applyChanges: () => void;
+    applyChanges: () => string;
     askEnvVars: (input: AskEnvVarsArgs) => Promise<string[]>;
     setEnvVars: (vars: Record<string, any>) => void;
     awaitConnectionAuth: (toolkit: string) => Promise<void>;

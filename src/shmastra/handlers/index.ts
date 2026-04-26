@@ -2,6 +2,7 @@ import type { Config } from "@mastra/core";
 import type { ApiRoute } from "@mastra/core/server";
 
 import {createShmastraCode, ShmastraCode} from "../code";
+import {versionHandler} from "./version";
 import {answerHandler} from "./answer";
 import {staticHandler} from "./static";
 import {threadHandler} from "./thread";
@@ -52,6 +53,11 @@ export async function withShmastraRoutes(config: Config): Promise<ApiRoute[]> {
       path: "/shmastra/public/:path{.+}",
       method: "GET",
       handler: staticHandler,
+    },
+    {
+      path: "/shmastra/api/version",
+      method: "GET",
+      handler: versionHandler,
     },
     {
       path: "/shmastra/api/thread",

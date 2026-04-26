@@ -17,6 +17,8 @@ export function resolveRelativeUrls(text: string): string {
 
 export function fixTelegramMarkdownV1(text: string) {
     return text
-        .replace(/\\\n/g, '\n')
+        // Strip backslash escapes that aren't valid in Markdown v1.
+        // V1 only escapes _ * ` [ — anything else leaks the backslash literally.
+        .replace(/\\([^_*`[])/g, '$1')
         .replace(/^- /gm, '• ');
 }

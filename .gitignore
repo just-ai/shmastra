@@ -8,6 +8,7 @@ files
 .logs
 .env.development
 .env
+.version
 *.db
 *.db-*
 .netlify
