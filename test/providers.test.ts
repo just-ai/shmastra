@@ -9,6 +9,7 @@ const MOCK_REGISTRY = {
         apiKeyEnvVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
         models: [
             'gemini-3-pro-preview',
+            'gemini-3.1-pro-preview',
             'gemini-3-flash-preview',
             'gemini-3.1-flash-lite-preview',
         ],
@@ -106,6 +107,6 @@ describe('getAgentModel', () => {
 
     it('resolves the "best" tier', async () => {
         const { getAgentModel } = await loadProviders({ GOOGLE_GENERATIVE_AI_API_KEY: 'g' })
-        expect(getAgentModel('best')).toEqual([{ model: 'google/gemini-3-pro-preview', maxRetries: 1 }])
+        expect(getAgentModel('best')).toEqual([{ model: 'google/gemini-3.1-pro-preview', maxRetries: 1 }])
     })
 })
