@@ -36,6 +36,8 @@ Use them when the agent should respond in Slack, Discord, Telegram, or other sup
 | [webex.md](references/webex.md) | `@bitbasti/chat-adapter-webex` |
 | [baileys.md](references/baileys.md) | `chat-adapter-baileys` `baileys`       |
 | [sendblue.md](references/sendblue.md) | `chat-adapter-sendblue`       |
+| [zalo.md](references/zalo.md) | `chat-adapter-zalo`           |
+| [mattermost.md](references/mattermost.md) | `chat-adapter-mattermost`     |
 
 ## How to add channels to agent
 
