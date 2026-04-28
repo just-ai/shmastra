@@ -47,8 +47,9 @@ If running shmastra standalone, the scheduler tools are simply unavailable.
 
 - **`src/shmastra/`** — all Shmastra-specific logic:
   - `mastra.ts` — Mastra factory: runs wizard in dev mode, injects server config, patches agent streams for message deduplication
+  - `gateway.ts` — `BaseUrlGateway` replaces the default models.dev gateway globally; reads `{PROVIDER_UPPER}_BASE_URL` env vars (e.g. `OPENAI_BASE_URL`, `GOOGLE_BASE_URL`, `ANTHROPIC_BASE_URL`) to route LLM calls to custom endpoints. Shmastra Cloud uses this to proxy all provider traffic through its virtual-key gateway.
   - `handlers/` — Hono HTTP handlers (chat, files, threads, OAuth/Composio, env vars, streaming, apps serving, public URL detection)
-  - `code/` — mastracode harness for sandboxed code generation. Uses subagent pattern for Mastra client operations. `apply_changes` tool runs dry-run builds via `scripts/dry-run.ts`
+  - `code/` — mastracode harness for sandboxed code generation. Uses subagent pattern for Mastra client operations. Dry-run builds via `scripts/dry-run.ts`; `applyChanges()` writes a timestamp to `.version` on success.
   - `tools/` — dynamic tool creation (`createAgentTools`, web search)
   - `agents/` — built-in agents (web browser agent with native AgentBrowser)
   - `browser/` — AgentBrowser factory (headless Chromium via Mastra's native browser API)
@@ -77,10 +78,10 @@ HTTP request → middleware (public URL, script injection, streaming) → route 
 
 Models are selected based on availability (API key present) with fallback order: OpenAI → Google → Anthropic.
 
-- **fast**: gpt-5.4-nano, gemini-3.1-flash-lite, claude-haiku-4-5
-- **general**: gpt-5.4-mini, gemini-3-flash, claude-sonnet-4-6
-- **best**: gpt-5.4, gemini-3-pro, claude-sonnet-4-6
-- **developer** (code harness): gpt-5.4, claude-opus-4-6, gemini-3.1-pro
+- **fast**: gpt-5.4-nano, gemini-3.1-flash-lite-preview, claude-sonnet-4-6
+- **general**: gpt-5.4-mini, claude-sonnet-4-6, gemini-3-flash-preview
+- **best**: gpt-5.4, claude-opus-4-7, gemini-3.1-pro-preview
+- **developer** (mastracode internal harness only — not used for runtime Mastra agents): claude-opus-4-7, gpt-5.5, gemini-3.1-pro-preview
 
 ### Storage paths
 
@@ -89,6 +90,7 @@ Models are selected based on availability (API key present) with fallback order:
 - `.storage/code.db` — code harness database
 - `files/` — uploaded files with generated public URLs
 - `.mastra/output/` — build output
+- `.version` — current version timestamp, written by `applyChanges()`; read by `GET /shmastra/api/version`
 
 ## Key conventions
 
