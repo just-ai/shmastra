@@ -49,7 +49,7 @@ If running shmastra standalone, the scheduler tools are simply unavailable.
   - `mastra.ts` — Mastra factory: runs wizard in dev mode, injects server config, patches agent streams for message deduplication
   - `gateway.ts` — `BaseUrlGateway` replaces the default models.dev gateway globally; reads `{PROVIDER_UPPER}_BASE_URL` env vars (e.g. `OPENAI_BASE_URL`, `GOOGLE_BASE_URL`, `ANTHROPIC_BASE_URL`) to route LLM calls to custom endpoints. Shmastra Cloud uses this to proxy all provider traffic through its virtual-key gateway.
   - `handlers/` — Hono HTTP handlers (chat, files, threads, OAuth/Composio, env vars, streaming, apps serving, public URL detection)
-  - `code/` — mastracode harness for sandboxed code generation. Uses subagent pattern for Mastra client operations. `apply_changes` tool runs dry-run builds via `scripts/dry-run.ts`, writes a timestamp to `.version`, and returns it. Pass `notify: true` to receive a follow-up message once Mastra restarts with applied changes.
+  - `code/` — mastracode harness for sandboxed code generation. Uses subagent pattern for Mastra client operations. Dry-run builds via `scripts/dry-run.ts`; `applyChanges()` writes a timestamp to `.version` on success.
   - `tools/` — dynamic tool creation (`createAgentTools`, web search)
   - `agents/` — built-in agents (web browser agent with native AgentBrowser)
   - `browser/` — AgentBrowser factory (headless Chromium via Mastra's native browser API)
@@ -81,7 +81,7 @@ Models are selected based on availability (API key present) with fallback order:
 - **fast**: gpt-5.4-nano, gemini-3.1-flash-lite-preview, claude-sonnet-4-6
 - **general**: gpt-5.4-mini, claude-sonnet-4-6, gemini-3-flash-preview
 - **best**: gpt-5.4, claude-opus-4-7, gemini-3.1-pro-preview
-- **developer** (code harness): claude-opus-4-7, gpt-5.5, gemini-3.1-pro-preview
+- **developer** (mastracode internal harness only — not used for runtime Mastra agents): claude-opus-4-7, gpt-5.5, gemini-3.1-pro-preview
 
 ### Storage paths
 
