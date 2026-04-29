@@ -9,7 +9,7 @@
 [Mastra](https://mastra.ai) is brilliant — if you write TypeScript.
 Shmastra brings that power to **everyone**.
 
-[shmastra-intro-1777487331086.webm](https://github.com/user-attachments/assets/e84ff60c-2a26-4314-8f07-61218fd79fed)
+[shmastra-intro-1777487796493.webm](https://github.com/user-attachments/assets/ed10ea6a-96e9-4fdb-a94e-d33899410ed0)
 
 ## Quick start
 
