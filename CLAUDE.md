@@ -56,7 +56,7 @@ If running shmastra standalone, the scheduler tools are simply unavailable.
   - `rag/` — markitdown-based RAG (PDF, DOCX, HTML → text, 200k char limit)
   - `mcp/` — MCP server integration and discovery
   - `connections/` — Composio toolkit (200+ service integrations, session-based OAuth, toolkit tool execution)
-  - `channels/` — multi-channel support (Telegram, Slack, Discord, etc.)
+  - `channels/` — multi-channel support (Telegram, Slack, Discord, Zalo, Mattermost, etc.)
   - `client/` — Mastra client subagent with observability tools (metrics, traces, timeseries)
   - `providers.ts` — model selection by tier (fast/general/best) across OpenAI, Google, Anthropic
   - `wizard/` — interactive setup: OAuth login for providers (OpenAI, Anthropic), API key configuration, Composio setup
@@ -75,12 +75,12 @@ HTTP request → middleware (public URL, script injection, streaming) → route 
 
 ### Model tiers
 
-Models are selected based on availability (API key present) with fallback order: OpenAI → Google → Anthropic.
+Models are selected by availability (API key present). All available candidates in a tier are tried with `maxRetries: 1` for automatic fallback. Priority order varies by tier.
 
-- **fast**: gpt-5.4-nano, gemini-3.1-flash-lite, claude-haiku-4-5
-- **general**: gpt-5.4-mini, gemini-3-flash, claude-sonnet-4-6
-- **best**: gpt-5.4, gemini-3-pro, claude-sonnet-4-6
-- **developer** (code harness): gpt-5.4, claude-opus-4-6, gemini-3.1-pro
+- **fast**: gpt-5.4-nano, gemini-3.1-flash-lite-preview, claude-sonnet-4-6
+- **general**: gpt-5.4-mini, claude-sonnet-4-6, gemini-3-flash-preview
+- **best**: gpt-5.4, claude-opus-4-7, gemini-3.1-pro-preview
+- **developer** (code harness): claude-opus-4-7, gpt-5.5, gemini-3.1-pro-preview
 
 ### Storage paths
 
@@ -111,6 +111,8 @@ Requires Node >= 22.13.0. At least one LLM provider API key must be set:
 - `GOOGLE_GENERATIVE_AI_API_KEY`
 
 Optional: `COMPOSIO_API_KEY`, `MASTRA_AUTH_TOKEN`, `PUBLIC_URL`, `USER_ID`, `CORS_ORIGIN`.
+
+Provider base URLs can be overridden via env vars (e.g. `GOOGLE_GENERATIVE_AI_BASE_URL`) using `BaseUrlGateway` — useful for proxies or compatible API endpoints.
 
 In dev mode, a wizard prompts for OAuth login (OpenAI/Anthropic) and missing API keys interactively.
 
