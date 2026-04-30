@@ -56,9 +56,9 @@ If running shmastra standalone, the scheduler tools are simply unavailable.
   - `rag/` — markitdown-based RAG (PDF, DOCX, HTML → text, 200k char limit)
   - `mcp/` — MCP server integration and discovery
   - `connections/` — Composio toolkit (200+ service integrations, session-based OAuth, toolkit tool execution)
-  - `channels/` — multi-channel support (Telegram, Slack, Discord, etc.)
+  - `channels/` — multi-channel support (Telegram, Slack, Discord, Zalo, Mattermost, etc.)
   - `client/` — Mastra client subagent with observability tools (metrics, traces, timeseries)
-  - `providers.ts` — model selection by tier (fast/general/best) across OpenAI, Google, Anthropic
+  - `providers.ts` — model selection by tier (fast/general/best/developer/observer) across OpenAI, Google, Anthropic
   - `wizard/` — interactive setup: OAuth login for providers (OpenAI, Anthropic), API key configuration, Composio setup
   - `env.ts` — .env management, package manager detection (pnpm preferred), public URL resolution
 
@@ -75,12 +75,13 @@ HTTP request → middleware (public URL, script injection, streaming) → route 
 
 ### Model tiers
 
-Models are selected based on availability (API key present) with fallback order: OpenAI → Google → Anthropic.
+Models are selected based on availability (API key present); multiple models per tier enable automatic retry on failure. Current tiers (see `src/shmastra/providers.ts`):
 
-- **fast**: gpt-5.4-nano, gemini-3.1-flash-lite, claude-haiku-4-5
-- **general**: gpt-5.4-mini, gemini-3-flash, claude-sonnet-4-6
-- **best**: gpt-5.4, gemini-3-pro, claude-sonnet-4-6
-- **developer** (code harness): gpt-5.4, claude-opus-4-6, gemini-3.1-pro
+- **fast**: gpt-5.4-nano, gemini-3.1-flash-lite-preview, claude-sonnet-4-6
+- **general**: gpt-5.4-mini, claude-sonnet-4-6, gemini-3-flash-preview
+- **best**: gpt-5.4, claude-opus-4-7, gemini-3.1-pro-preview
+- **developer** (code harness): claude-opus-4-7, gpt-5.5, gemini-3.1-pro-preview
+- **observer** (client subagent): gemini-3-flash-preview, gpt-5.4-mini, claude-sonnet-4-6
 
 ### Storage paths
 
