@@ -56,9 +56,10 @@ If running shmastra standalone, the scheduler tools are simply unavailable.
   - `rag/` — markitdown-based RAG (PDF, DOCX, HTML → text, 200k char limit)
   - `mcp/` — MCP server integration and discovery
   - `connections/` — Composio toolkit (200+ service integrations, session-based OAuth, toolkit tool execution)
-  - `channels/` — multi-channel support (Telegram, Slack, Discord, etc.)
+  - `channels/` — multi-channel support (Telegram, Slack, Discord, Zalo, Mattermost, etc.)
   - `client/` — Mastra client subagent with observability tools (metrics, traces, timeseries)
   - `providers.ts` — model selection by tier (fast/general/best) across OpenAI, Google, Anthropic
+  - `gateway.ts` — `BaseUrlGateway` replaces the default models.dev gateway globally; reads `GOOGLE_BASE_URL` / `GEMINI_BASE_URL` env vars to redirect those providers through a custom endpoint (Shmastra Cloud uses this to proxy all LLM traffic through its virtual-key gateway)
   - `wizard/` — interactive setup: OAuth login for providers (OpenAI, Anthropic), API key configuration, Composio setup
   - `env.ts` — .env management, package manager detection (pnpm preferred), public URL resolution
 
@@ -110,7 +111,7 @@ Requires Node >= 22.13.0. At least one LLM provider API key must be set:
 - `ANTHROPIC_API_KEY`
 - `GOOGLE_GENERATIVE_AI_API_KEY`
 
-Optional: `COMPOSIO_API_KEY`, `MASTRA_AUTH_TOKEN`, `PUBLIC_URL`, `USER_ID`, `CORS_ORIGIN`.
+Optional: `COMPOSIO_API_KEY`, `MASTRA_AUTH_TOKEN`, `PUBLIC_URL`, `USER_ID`, `CORS_ORIGIN`, `GOOGLE_BASE_URL`, `GEMINI_BASE_URL` (custom endpoint for Google/Gemini LLM calls, used by Shmastra Cloud for virtual-key proxying).
 
 In dev mode, a wizard prompts for OAuth login (OpenAI/Anthropic) and missing API keys interactively.
 
