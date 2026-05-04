@@ -22,7 +22,7 @@ export async function resolveFileUrl(file: string, mimeType?: string): Promise<s
     const fileName = fileMatch[1]
 
     // 1. PUBLIC_URL
-    const publicUrl = await getPublicUrl();
+    const publicUrl = getPublicUrl();
     if (publicUrl && isApiPath) {
         // Disable until we understand what to do if file became unavailable in runtime
         //return `${publicUrl.replace(/\/$/, '')}/shmastra/api/files/${fileName}`
