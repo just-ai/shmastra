@@ -10,7 +10,6 @@ import {envVarsHandler} from "./vars";
 import {uploadHandler, getFileHandler, uploadOpenapi, getFileOpenapi} from "./files";
 import {injectScript} from "./script";
 import {handleStream} from "./stream";
-import {detectPublicUrl} from "./public-url";
 import {chatHandler} from "./chat";
 import {toolkitAuthHandler, toolkitAuthLinkHandler} from "./connections";
 import {appIndexHandler, appStaticHandler} from "./apps";
@@ -24,7 +23,6 @@ export function withShmastraMiddlewares(config: Config): Middleware[] {
 
   return [
     ...middlewares,
-    detectPublicUrl,
     injectScript,
     handleStream,
   ]
