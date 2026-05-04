@@ -2,7 +2,7 @@ import {getPublicUrl} from "../env";
 import {getMastra} from "../utils";
 
 async function getBaseUrl(): Promise<string> {
-    const publicUrl = await getPublicUrl();
+    const publicUrl = getPublicUrl();
     if (publicUrl) return publicUrl.replace(/\/$/, "");
     const mastra = await getMastra();
     const port = mastra.getServer()?.port ?? process.env.PORT ?? 4111;

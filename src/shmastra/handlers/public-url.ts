@@ -2,7 +2,7 @@ import {Middleware} from "../../mastra/middleware";
 import {getPublicUrl} from "../env";
 
 export const detectPublicUrl: Middleware = async (c, next) => {
-    const publicUrl = await getPublicUrl();
+    const publicUrl = getPublicUrl();
     if (!publicUrl && !process.env.PUBLIC_URL) {
         const proto = c.req.header('x-forwarded-proto') || (new URL(c.req.url).protocol.replace(':', ''));
 

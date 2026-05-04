@@ -2,7 +2,6 @@ import { existsSync, readFileSync, writeFileSync } from 'fs'
 import * as path from 'path'
 import { fileURLToPath } from 'url'
 import {execSync} from "node:child_process";
-import {getMastra} from "./utils";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -24,16 +23,8 @@ export function getPackageManager(): string {
     return _packageManager;
 }
 
-let _publicUrl = process.env.PUBLIC_URL;
-export async function getPublicUrl() {
-    if (!_publicUrl && process.env.PUBLIC_URL) {
-        _publicUrl = process.env.PUBLIC_URL;
-    } else if (!_publicUrl && sandboxId) {
-        const mastra = await getMastra();
-        const port = mastra.getServer()?.port ?? process.env.PORT ?? 4111;
-        _publicUrl = `https://${port}-${process.env.E2B_SANDBOX_ID}.e2b.app`;
-    }
-    return _publicUrl;
+export function getPublicUrl(): string | undefined {
+    return process.env.PUBLIC_URL;
 }
 
 export function parseEnvContent(content: string): Record<string, string> {

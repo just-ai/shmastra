@@ -38,7 +38,7 @@ export function patchInstructions(harness: Harness, config: Config) {
     const agent = harness.getCurrentMode().agent as Agent;
     const getInstructions = agent.getInstructions?.bind(agent);
     agent.getInstructions = async ({ requestContext }: { requestContext?: RequestContext } = {}) => {
-        const publicUrl = await getPublicUrl();
+        const publicUrl = getPublicUrl();
         const instructions = await getInstructions?.({ requestContext });
         let message = systemMessageToString(instructions);
         let environmentSection = extractSection(message, "# Environment");
