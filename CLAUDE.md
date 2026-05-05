@@ -46,7 +46,7 @@ The file is **not** part of this template and must not be committed here.
 If running shmastra standalone, the scheduler tools are simply unavailable.
 
 - **`src/shmastra/`** — all Shmastra-specific logic:
-  - `mastra.ts` — Mastra factory: runs wizard in dev mode, injects server config, patches agent streams for message deduplication
+  - `mastra.ts` — Mastra factory: runs wizard in dev mode, resolves `PUBLIC_URL` once at startup (auto-detected from E2B sandbox URL if not set, then written to `process.env.PUBLIC_URL`), injects server config, patches agent streams for message deduplication
   - `handlers/` — Hono HTTP handlers (chat, files, threads, OAuth/Composio, env vars, streaming, apps serving, public URL detection)
   - `code/` — mastracode harness for sandboxed code generation. Uses subagent pattern for Mastra client operations. `apply_changes` tool runs dry-run builds via `scripts/dry-run.ts`
   - `tools/` — dynamic tool creation (`createAgentTools`, web search)
@@ -110,7 +110,7 @@ Requires Node >= 22.13.0. At least one LLM provider API key must be set:
 - `ANTHROPIC_API_KEY`
 - `GOOGLE_GENERATIVE_AI_API_KEY`
 
-Optional: `COMPOSIO_API_KEY`, `MASTRA_AUTH_TOKEN`, `PUBLIC_URL`, `USER_ID`, `CORS_ORIGIN`.
+Optional: `COMPOSIO_API_KEY`, `MASTRA_AUTH_TOKEN`, `PUBLIC_URL` (resolved once at startup in `createMastra` — set before starting the server; auto-detected from E2B sandbox URL if unset), `USER_ID`, `CORS_ORIGIN`.
 
 In dev mode, a wizard prompts for OAuth login (OpenAI/Anthropic) and missing API keys interactively.
 
