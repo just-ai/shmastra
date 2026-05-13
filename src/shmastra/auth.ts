@@ -3,8 +3,9 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { HonoRequest, MiddlewareHandler } from "hono";
 import { MastraAuthProvider } from "@mastra/core/server";
+import { findProjectRoot } from "./files";
 
-const SESSIONS_DIR = path.resolve(process.cwd(), ".sessions");
+const SESSIONS_DIR = path.resolve(findProjectRoot(), ".sessions");
 const CACHE_TTL_MS = 30_000;
 
 export interface GuestSession {
