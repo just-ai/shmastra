@@ -3,16 +3,25 @@
     var port = window.MASTRA_SERVER_PORT && window.MASTRA_SERVER_PORT !== '80' && window.MASTRA_SERVER_PORT !== '443' ? ':' + window.MASTRA_SERVER_PORT : '';
     var API_BASE_URL = isLocalhost ? '' : (window.MASTRA_SERVER_PROTOCOL + '://' + window.MASTRA_SERVER_HOST + port);
     var BASE_URL = '/shmastra/public';
-    var isApp = window.location.pathname.startsWith('/shmastra/apps/');
+    // /apps/ is the new canonical path; /shmastra/apps/ kept for back-compat.
+    var isApp = window.location.pathname.startsWith('/shmastra/apps/')
+        || window.location.pathname.startsWith('/apps/');
 
     // Patch fetch/XHR with auth token for Mastra requests
     var token = window.MASTRA_AUTH_TOKEN;
     if (token) {
-        var mastraOrigin = API_BASE_URL || window.location.origin;
+        // Resolve "Mastra origin" off the document base, not the location, so
+        // app pages served from cloud.com with `<base href="https://sandbox/…">`
+        // still treat sandbox-bound fetches as Mastra-bound (and get the auth
+        // header). For Mastra-served pages, document.baseURI === location.href
+        // so this is equivalent to the old behaviour.
+        var docBaseOrigin;
+        try { docBaseOrigin = new URL(document.baseURI).origin; } catch { docBaseOrigin = window.location.origin; }
+        var mastraOrigin = API_BASE_URL || docBaseOrigin;
 
         var isMastraUrl = function (url) {
             if (url == null) return false;
-            try { return new URL(url, window.location.href).origin === mastraOrigin; }
+            try { return new URL(url, document.baseURI).origin === mastraOrigin; }
             catch { return false; }
         };
 

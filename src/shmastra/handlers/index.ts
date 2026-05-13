@@ -13,6 +13,7 @@ import {handleStream} from "./stream";
 import {chatHandler} from "./chat";
 import {toolkitAuthHandler, toolkitAuthLinkHandler} from "./connections";
 import {appIndexHandler, appStaticHandler} from "./apps";
+import {sessionAlsMiddleware} from "../auth";
 import {Middleware} from "../../mastra/middleware";
 
 export function withShmastraMiddlewares(config: Config): Middleware[] {
@@ -23,6 +24,7 @@ export function withShmastraMiddlewares(config: Config): Middleware[] {
 
   return [
     ...middlewares,
+    sessionAlsMiddleware,
     injectScript,
     handleStream,
   ]
@@ -37,6 +39,20 @@ export async function withShmastraRoutes(config: Config): Promise<ApiRoute[]> {
 
   return [
     ...routes,
+    // New canonical path for app pages — used by shmastra-cloud's
+    // /apps/[appName] and /apps/shared/[shareId] routes. The legacy
+    // /shmastra/apps/... aliases below stay for backward compat with any
+    // direct sandbox URLs in the wild.
+    {
+      path: "/apps/:appName",
+      method: "GET",
+      handler: appIndexHandler(config),
+    },
+    {
+      path: "/apps/:appName/:path{.+}",
+      method: "GET",
+      handler: appStaticHandler,
+    },
     {
       path: "/shmastra/apps/:appName",
       method: "GET",

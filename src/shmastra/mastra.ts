@@ -3,7 +3,7 @@ import {startShmastraWizard} from "./wizard";
 import {getPublicUrl, isDevMode, isDryRun, sandboxId} from "./env";
 import {withShmastraMiddlewares, withShmastraRoutes} from "./handlers";
 import {patchAgentStream} from "./utils";
-import {SimpleAuth} from "@mastra/core/server";
+import {ShmastraAuth} from "./auth";
 import {installBaseUrlGateway} from "./gateway";
 
 installBaseUrlGateway();
@@ -43,12 +43,9 @@ export const createMastra = async (config: Config) => {
         allowHeaders: ["Content-Type", "Authorization", "x-mastra-auth-token", "x-mastra-client-type"],
         credentials: true,
       } : undefined),
-      auth: config.server?.auth || (process.env.MASTRA_AUTH_TOKEN ? new SimpleAuth({
-        headers: ["x-mastra-auth-token", "Authorization"],
-        tokens: {
-          [process.env.MASTRA_AUTH_TOKEN]: { role: "owner" }
-        },
-        public: [/\/public\//, /\/files\//],
+      auth: config.server?.auth || (process.env.MASTRA_AUTH_TOKEN ? new ShmastraAuth({
+        ownerToken: process.env.MASTRA_AUTH_TOKEN,
+        public: [/\/public\//, /\/files\//, /\/apps\//, /\/shmastra\/apps\//],
       }) : undefined),
     }
   };
