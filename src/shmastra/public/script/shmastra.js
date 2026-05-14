@@ -69,8 +69,6 @@
         };
     }
 
-    if (isApp) return;
-
     function addScript(src, onload) {
         var script = document.createElement('script');
         script.async = false;
@@ -79,7 +77,7 @@
         document.head.appendChild(script);
     }
 
-    if (!window.location.pathname.includes('/agents/session/')) {
+    function loadWidget() {
         var link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = BASE_URL + '/shmastra.css';
@@ -92,6 +90,24 @@
         });
     }
 
+    if (isApp) {
+        // On an app page, only load the coding widget when the renderer has
+        // flagged this viewer as the owner. Guests never get it (and even
+        // if they spoofed the flag, /shmastra/api/chat would refuse them).
+        // Widget loads collapsed — the user clicks the floating button to
+        // open the chat.
+        if (window.MASTRA_OWNER) {
+            loadWidget();
+            addScript('upload-file.js');
+            addScript('html-preview.js');
+        }
+        return;
+    }
+
+    // Studio (non-app) path: original behaviour.
+    if (!window.location.pathname.includes('/agents/session/')) {
+        loadWidget();
+    }
     addScript('upload-file.js');
     addScript('html-preview.js');
     addScript('spa-nav.js');
