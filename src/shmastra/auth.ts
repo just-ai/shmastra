@@ -127,7 +127,11 @@ export class ShmastraAuth extends MastraAuthProvider<UserSession> {
     // The browser sends `Referer: https://<cloud>/<referrer>...` for every
     // request originating from that page, so we just check the pathname
     // prefix matches the share URL we wrote into the session file.
-    const referer = request.header("referer");
+    //
+    // Note: Mastra's coreAuthMiddleware actually hands us the raw web
+    // `Request` here (not a `HonoRequest`) — the abstract signature in
+    // @mastra/core lies. Cast through to reach `.headers.get(...)`.
+    const referer = (request as unknown as Request).headers.get("referer");
     if (!referer) return false;
     try {
       const path = new URL(referer).pathname;
