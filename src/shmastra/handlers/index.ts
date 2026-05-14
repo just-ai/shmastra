@@ -34,9 +34,6 @@ export async function withShmastraRoutes(config: Config): Promise<ApiRoute[]> {
   const routes = config.server?.apiRoutes || [];
   const code: ShmastraCode = await createShmastraCode(config);
 
-  const apiPrefix = config.server?.apiPrefix || "/api";
-  const apiPath = (path: string) => `${apiPrefix}${path}`;
-
   return [
     ...routes,
     // App pages served at /apps/<name>. Cloud's /apps/[appName] and
@@ -117,18 +114,6 @@ export async function withShmastraRoutes(config: Config): Promise<ApiRoute[]> {
       path: "/shmastra/api/files/:fileName{.+}",
       method: "GET",
       handler: getFileHandler,
-    },
-    {
-      path: apiPath("/files"),
-      method: "POST",
-      handler: uploadHandler,
-      openapi: uploadOpenapi,
-    },
-    {
-      path: apiPath("/files/:fileName{.+}"),
-      method: "GET",
-      handler: getFileHandler,
-      openapi: getFileOpenapi,
     },
   ];
 }

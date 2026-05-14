@@ -1,43 +1,53 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 import type { HonoRequest, MiddlewareHandler } from "hono";
 import { MastraAuthProvider } from "@mastra/core/server";
 import { findProjectRoot } from "./files";
 
 const SESSIONS_DIR = path.resolve(findProjectRoot(), ".sessions");
-const CACHE_TTL_MS = 30_000;
 
-export interface GuestSession {
-  sessionId: string;
-  sessionVk: string;
-  viewerUserId: string;
-  referrer: string;
+/**
+ * Per-request user context. Always carries `userId`. For guests it additionally
+ * carries the share-session metadata loaded from `.sessions/<token>.json`; for
+ * the sandbox owner only `userId` is meaningful (sourced from `USER_ID` env).
+ *
+ * Used both as the value Mastra's auth middleware passes to authorizeUser and
+ * as the AsyncLocalStorage payload read by the LLM gateway for per-request
+ * attribution headers.
+ */
+export type UserSession =
+  | { role: "owner"; userId: string }
+  | { role: "guest"; userId: string; sessionId: string; sessionKey: string; referrer: string };
+
+// Parse-cache keyed by token. Session files are write-once (created at session
+// start, deleted when the share is revoked / expires), so a cheap fs.access on
+// each request is enough to keep the cache truthful — if the file still exists,
+// the cached parse is still valid; if it's gone, drop the entry. This avoids
+// re-reading and re-parsing JSON on every authenticated call without ever
+// serving a session that's been revoked on disk.
+const cache = new Map<string, UserSession>();
+
+async function sessionFileExists(token: string): Promise<boolean> {
+  try {
+    await access(path.join(SESSIONS_DIR, `${token}.json`));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-export type ShmastraUser =
-  | { role: "owner" }
-  | ({ role: "guest" } & GuestSession);
+// AsyncLocalStorage holding the current authenticated user for the lifetime of
+// a single HTTP request. Read by src/shmastra/gateway.ts to stamp outgoing LLM
+// calls with `x-shmastra-user-id` / `x-shmastra-session-key` so the cloud can
+// attribute usage to the actual viewer (or to the owner for non-guest calls).
+export const sessionAls = new AsyncLocalStorage<UserSession>();
 
-interface CacheEntry {
-  user: ShmastraUser | null;
-  expiresAt: number;
-}
-
-const cache = new Map<string, CacheEntry>();
-
-// AsyncLocalStorage holding the current guest session (if any) for the
-// lifetime of a single HTTP request. Read by src/shmastra/gateway.ts to
-// rewrite outgoing LLM calls so they bear the session VK instead of the
-// sandbox-wide owner VK — this lets cloud attribute usage to the session
-// even though the owner is still billed.
-export const sessionAls = new AsyncLocalStorage<GuestSession>();
-
-export function getCurrentGuestSession(): GuestSession | undefined {
+export function getCurrentUserSession(): UserSession | undefined {
   return sessionAls.getStore();
 }
 
-async function readSessionFile(token: string): Promise<GuestSession | null> {
+async function readGuestSession(token: string): Promise<UserSession | null> {
   // Filename = token (e.g. `st_abc.json`). Reject anything containing path
   // separators so a hostile header value can't escape the sessions dir.
   if (!token || /[\/\\\0]/.test(token)) return null;
@@ -47,28 +57,36 @@ async function readSessionFile(token: string): Promise<GuestSession | null> {
     const data = JSON.parse(text);
     if (
       typeof data?.sessionId !== "string" ||
-      typeof data?.sessionVk !== "string" ||
-      typeof data?.viewerUserId !== "string" ||
+      typeof data?.sessionKey !== "string" ||
+      typeof data?.userId !== "string" ||
       typeof data?.referrer !== "string"
     ) {
       return null;
     }
-    return data as GuestSession;
+    return {
+      role: "guest",
+      userId: data.userId,
+      sessionId: data.sessionId,
+      sessionKey: data.sessionKey,
+      referrer: data.referrer,
+    };
   } catch {
     return null;
   }
 }
 
-async function resolveUser(token: string, ownerToken: string | undefined): Promise<ShmastraUser | null> {
-  if (ownerToken && token === ownerToken) return { role: "owner" };
+async function resolveUser(token: string, ownerToken: string | undefined): Promise<UserSession | null> {
+  if (ownerToken && token === ownerToken) {
+    return { role: "owner", userId: process.env.USER_ID ?? "" };
+  }
+  if (!token || /[\/\\\0]/.test(token)) return null;
 
-  const now = Date.now();
   const cached = cache.get(token);
-  if (cached && cached.expiresAt > now) return cached.user;
+  if (cached && (await sessionFileExists(token))) return cached;
 
-  const session = await readSessionFile(token);
-  const user: ShmastraUser | null = session ? { role: "guest", ...session } : null;
-  cache.set(token, { user, expiresAt: now + CACHE_TTL_MS });
+  const user = await readGuestSession(token);
+  if (user) cache.set(token, user);
+  else cache.delete(token);
   return user;
 }
 
@@ -77,7 +95,7 @@ export interface ShmastraAuthOptions {
   public?: RegExp[];
 }
 
-export class ShmastraAuth extends MastraAuthProvider<ShmastraUser> {
+export class ShmastraAuth extends MastraAuthProvider<UserSession> {
   private ownerToken: string | undefined;
 
   constructor(options: ShmastraAuthOptions) {
@@ -85,18 +103,18 @@ export class ShmastraAuth extends MastraAuthProvider<ShmastraUser> {
     this.ownerToken = options.ownerToken;
   }
 
-  async authenticateToken(token: string, _request: HonoRequest): Promise<ShmastraUser | null> {
+  async authenticateToken(token: string, _request: HonoRequest): Promise<UserSession | null> {
     return resolveUser(token, this.ownerToken);
   }
 
-  async authorizeUser(user: ShmastraUser, request: HonoRequest): Promise<boolean> {
+  async authorizeUser(user: UserSession, request: HonoRequest): Promise<boolean> {
     if (user.role === "owner") return true;
 
     // Guest may only call API endpoints reachable from their share page.
     // The browser sends `Referer: https://<cloud>/<referrer>...` for every
     // request originating from that page, so we just check the pathname
     // prefix matches the share URL we wrote into the session file.
-    const referer = request.header("referer") ?? request.header("Referer");
+    const referer = request.header("referer");
     if (!referer) return false;
     try {
       const path = new URL(referer).pathname;
@@ -120,18 +138,14 @@ function extractToken(request: { header: (name: string) => string | undefined })
 
 /**
  * Hono middleware that runs each request inside an AsyncLocalStorage scope
- * carrying the guest session (if any). The Mastra auth middleware has already
- * validated the token before this point — we just re-resolve it through the
- * same in-memory cache and stash the session for downstream code.
+ * carrying the resolved user (owner or guest). The Mastra auth middleware has
+ * already validated the token before this point — we just re-resolve it
+ * through the same in-memory cache and stash the user for downstream code.
  */
 export const sessionAlsMiddleware: MiddlewareHandler = async (c, next) => {
   const token = extractToken(c.req);
   if (!token) return next();
-  const ownerToken = process.env.MASTRA_AUTH_TOKEN;
-  const user = await resolveUser(token, ownerToken);
-  if (user?.role === "guest") {
-    const { sessionId, sessionVk, viewerUserId, referrer } = user;
-    return sessionAls.run({ sessionId, sessionVk, viewerUserId, referrer }, () => next());
-  }
-  return next();
+  const user = await resolveUser(token, process.env.MASTRA_AUTH_TOKEN);
+  if (!user) return next();
+  return sessionAls.run(user, () => next());
 };
