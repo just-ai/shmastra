@@ -132,9 +132,16 @@ export class ShmastraAuth extends MastraAuthProvider<UserSession> {
     // Everything under `/shmastra/api/*` is owner-tooling: the mastracode
     // coding agent (`/chat`, `/answer`, `/thread`) literally rewrites the
     // Mastra server, `/vars` edits .env, `/connection` runs Composio OAuth.
-    // Guests have no business calling any of it. File up/download is the
-    // one exception — apps need it for attachments.
-    if (pathname.startsWith("/shmastra/api/") && !pathname.startsWith("/shmastra/api/files")) {
+    // Guests have no business calling any of it. Carve out exceptions for
+    // routes apps legitimately need:
+    //   - /shmastra/api/files       — uploads/downloads for app attachments
+    //   - /shmastra/api/apps/<name> — app-authored custom backend routes
+    //     (skills/apps SKILL.md mandates this prefix)
+    const guestApiAllowlist = ["/shmastra/api/files", "/shmastra/api/apps/"];
+    if (
+      pathname.startsWith("/shmastra/api/") &&
+      !guestApiAllowlist.some((p) => pathname.startsWith(p))
+    ) {
       return false;
     }
 
