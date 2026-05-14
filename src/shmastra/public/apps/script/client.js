@@ -1,9 +1,19 @@
 import { Mastra } from './mastra.js';
 
+// Resolve the Mastra origin from <base href> when present so apps served via a
+// cloud frontend (which injects `<base href="https://<sandbox>/apps/<name>/">`)
+// hit the sandbox directly instead of going back through the cloud proxy. With
+// no <base>, document.baseURI equals location.href and this is equivalent to
+// location.origin.
+const docBaseOrigin = (() => {
+  try { return new URL(document.baseURI).origin; }
+  catch { return window.location.origin; }
+})();
+
 const API_BASE_URL = window.MASTRA_SERVER_URL
   || (window.MASTRA_SERVER_HOST
     ? `${window.MASTRA_SERVER_PROTOCOL || 'https'}://${window.MASTRA_SERVER_HOST}${window.MASTRA_SERVER_PORT && window.MASTRA_SERVER_PORT !== '80' && window.MASTRA_SERVER_PORT !== '443' ? ':' + window.MASTRA_SERVER_PORT : ''}`
-    : window.location.origin);
+    : docBaseOrigin);
 
 let controller = new AbortController();
 
