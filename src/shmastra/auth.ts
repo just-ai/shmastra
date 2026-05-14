@@ -137,7 +137,13 @@ export class ShmastraAuth extends MastraAuthProvider<UserSession> {
     //   - /shmastra/api/files       — uploads/downloads for app attachments
     //   - /shmastra/api/apps/<name> — app-authored custom backend routes
     //     (skills/apps SKILL.md mandates this prefix)
-    const guestApiAllowlist = ["/shmastra/api/files", "/shmastra/api/apps/"];
+    //   - /shmastra/api/user        — read-only "who am I", lets the
+    //     guest's shmastra.js see role==="guest" and skip the widget
+    const guestApiAllowlist = [
+      "/shmastra/api/files",
+      "/shmastra/api/apps/",
+      "/shmastra/api/user",
+    ];
     if (
       pathname.startsWith("/shmastra/api/") &&
       !guestApiAllowlist.some((p) => pathname.startsWith(p))
