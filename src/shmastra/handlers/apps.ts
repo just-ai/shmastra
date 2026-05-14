@@ -60,3 +60,15 @@ export const appStaticHandler: Handler = async (c) => {
     return new Response("Not found", { status: 404 });
   }
 };
+
+// 308 redirect for the legacy /shmastra/apps/* path. Keeps bookmarks and
+// agent-generated markdown links working now that the canonical path is
+// /apps/<name>.
+export const appLegacyRedirectHandler: Handler = (c) => {
+  const appName = c.req.param("appName") || "";
+  const rest = c.req.param("path");
+  const qIndex = c.req.url.indexOf("?");
+  const search = qIndex >= 0 ? c.req.url.slice(qIndex) : "";
+  const target = rest ? `/apps/${appName}/${rest}${search}` : `/apps/${appName}${search}`;
+  return c.redirect(target, 308);
+};

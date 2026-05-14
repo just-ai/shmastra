@@ -12,7 +12,7 @@ import {injectScript} from "./script";
 import {handleStream} from "./stream";
 import {chatHandler} from "./chat";
 import {toolkitAuthHandler, toolkitAuthLinkHandler} from "./connections";
-import {appIndexHandler, appStaticHandler} from "./apps";
+import {appIndexHandler, appLegacyRedirectHandler, appStaticHandler} from "./apps";
 import {sessionAlsMiddleware} from "../auth";
 import {Middleware} from "../../mastra/middleware";
 
@@ -50,6 +50,18 @@ export async function withShmastraRoutes(config: Config): Promise<ApiRoute[]> {
       path: "/apps/:appName/:path{.+}",
       method: "GET",
       handler: appStaticHandler,
+    },
+    // Legacy redirects so old bookmarks / agent-generated markdown links
+    // pointing at /shmastra/apps/<name> still land on /apps/<name>.
+    {
+      path: "/shmastra/apps/:appName",
+      method: "GET",
+      handler: appLegacyRedirectHandler,
+    },
+    {
+      path: "/shmastra/apps/:appName/:path{.+}",
+      method: "GET",
+      handler: appLegacyRedirectHandler,
     },
     {
       path: "/shmastra/public/:path{.+}",
