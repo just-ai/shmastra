@@ -47,7 +47,7 @@ export function getCurrentUserSession(): UserSession | undefined {
   return sessionAls.getStore();
 }
 
-async function readGuestSession(token: string): Promise<UserSession | null> {
+async function readUserSession(token: string): Promise<UserSession | null> {
   // Filename = token (e.g. `st_abc.json`). Reject anything containing path
   // separators so a hostile header value can't escape the sessions dir.
   if (!token || /[\/\\\0]/.test(token)) return null;
@@ -84,7 +84,7 @@ async function resolveUser(token: string, ownerToken: string | undefined): Promi
   const cached = cache.get(token);
   if (cached && (await sessionFileExists(token))) return cached;
 
-  const user = await readGuestSession(token);
+  const user = await readUserSession(token);
   if (user) cache.set(token, user);
   else cache.delete(token);
   return user;
@@ -96,6 +96,11 @@ export interface ShmastraAuthOptions {
 }
 
 export class ShmastraAuth extends MastraAuthProvider<UserSession> {
+  // Exempts the provider from the EE license gate so Studio's /auth/capabilities
+  // returns user info (and skips the "no login method" screen) for our bearer-token
+  // auth — same flag Mastra's built-in SimpleAuth sets.
+  readonly isSimpleAuth = true;
+
   private ownerToken: string | undefined;
 
   constructor(options: ShmastraAuthOptions) {
@@ -105,6 +110,14 @@ export class ShmastraAuth extends MastraAuthProvider<UserSession> {
 
   async authenticateToken(token: string, _request: HonoRequest): Promise<UserSession | null> {
     return resolveUser(token, this.ownerToken);
+  }
+
+  async getCurrentUser(request: Request): Promise<{ id: string } | null> {
+    const raw = request.headers.get("authorization");
+    if (!raw) return null;
+    const token = raw.replace(/^Bearer\s+/i, "").trim();
+    const user = await resolveUser(token, this.ownerToken);
+    return user ? { id: user.userId } : null;
   }
 
   async authorizeUser(user: UserSession, request: HonoRequest): Promise<boolean> {
