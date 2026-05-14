@@ -45,7 +45,7 @@ export const createMastra = async (config: Config) => {
       } : undefined),
       auth: config.server?.auth || (process.env.MASTRA_AUTH_TOKEN ? new ShmastraAuth({
         ownerToken: process.env.MASTRA_AUTH_TOKEN,
-        public: [/\/public\//, /\/files\//, /\/apps\//, /\/shmastra\/apps\//],
+        public: [/\/public\//, /\/files\//, /\/apps\//],
       }) : undefined),
     }
   };

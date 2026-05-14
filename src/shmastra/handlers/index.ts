@@ -39,10 +39,8 @@ export async function withShmastraRoutes(config: Config): Promise<ApiRoute[]> {
 
   return [
     ...routes,
-    // New canonical path for app pages — used by shmastra-cloud's
-    // /apps/[appName] and /apps/shared/[shareId] routes. The legacy
-    // /shmastra/apps/... aliases below stay for backward compat with any
-    // direct sandbox URLs in the wild.
+    // App pages served at /apps/<name>. Cloud's /apps/[appName] and
+    // /apps/shared/[shareId] routes fetch HTML from these paths.
     {
       path: "/apps/:appName",
       method: "GET",
@@ -50,16 +48,6 @@ export async function withShmastraRoutes(config: Config): Promise<ApiRoute[]> {
     },
     {
       path: "/apps/:appName/:path{.+}",
-      method: "GET",
-      handler: appStaticHandler,
-    },
-    {
-      path: "/shmastra/apps/:appName",
-      method: "GET",
-      handler: appIndexHandler(config),
-    },
-    {
-      path: "/shmastra/apps/:appName/:path{.+}",
       method: "GET",
       handler: appStaticHandler,
     },

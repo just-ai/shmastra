@@ -33,7 +33,7 @@ src/mastra/public/apps/my-app/
     ...
 ```
 
-Apps are served at `/shmastra/apps/my-app`. All relative imports resolve correctly.
+Apps are served at `/apps/my-app`. All relative imports resolve correctly.
 
 ## index.html template
 
@@ -68,7 +68,7 @@ Apps are served at `/shmastra/apps/my-app`. All relative imports resolve correct
 </head>
 <body>
   <div id="app"></div>
-  <script type="module" src="/shmastra/apps/my-app/app.js"></script>
+  <script type="module" src="/apps/my-app/app.js"></script>
 </body>
 </html>
 ```
@@ -185,7 +185,7 @@ Prefer calling workflows, agents and tools over custom routes.
 When your agent returns a link to the app, use markdown:
 
 ```
-Here is your application: [Open Dashboard](/shmastra/apps/my-app)
+Here is your application: [Open Dashboard](/apps/my-app)
 ```
 
 The link will open separate browser tab and resolve index.html

@@ -3,9 +3,7 @@
     var port = window.MASTRA_SERVER_PORT && window.MASTRA_SERVER_PORT !== '80' && window.MASTRA_SERVER_PORT !== '443' ? ':' + window.MASTRA_SERVER_PORT : '';
     var API_BASE_URL = isLocalhost ? '' : (window.MASTRA_SERVER_PROTOCOL + '://' + window.MASTRA_SERVER_HOST + port);
     var BASE_URL = '/shmastra/public';
-    // /apps/ is the new canonical path; /shmastra/apps/ kept for back-compat.
-    var isApp = window.location.pathname.startsWith('/shmastra/apps/')
-        || window.location.pathname.startsWith('/apps/');
+    var isApp = window.location.pathname.startsWith('/apps/');
 
     // Patch fetch/XHR with auth token for Mastra requests
     var token = window.MASTRA_AUTH_TOKEN;
