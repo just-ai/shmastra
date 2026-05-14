@@ -11,7 +11,7 @@ export async function mastraClient(): Promise<MastraClient> {
             baseUrl: `http://localhost:${port}`,
             apiPrefix: mastra.getServer()?.apiPrefix,
             headers: process.env.MASTRA_AUTH_TOKEN ? {
-                "x-mastra-auth-token": `Bearer ${process.env.MASTRA_AUTH_TOKEN}`
+                "Authorization": `Bearer ${process.env.MASTRA_AUTH_TOKEN}`
             } : undefined,
         });
     }

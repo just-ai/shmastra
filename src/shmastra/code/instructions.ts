@@ -49,7 +49,7 @@ export function patchInstructions(harness: Harness, config: Config) {
             `\nMastra REST API prefix: ${config.server?.apiPrefix || "/api"}` +
             (publicUrl ? `\nPublic server URL: ${publicUrl}` : "") +
             `\nPackage Manager: ${getPackageManager()}` +
-            (process.env.MASTRA_AUTH_TOKEN ? "\nMastra API authorization enabled with MASTRA_AUTH_TOKEN env variable (use it in 'x-mastra-auth-token' header in curl requests)" : "") +
+            (process.env.MASTRA_AUTH_TOKEN ? "\nMastra API authorization enabled with MASTRA_AUTH_TOKEN env variable (pass it as 'Authorization: Bearer <token>' header in curl requests to Mastra API)" : "") +
             "\n\n";
 
         return [

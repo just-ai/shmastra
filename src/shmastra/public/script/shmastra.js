@@ -40,7 +40,7 @@
             } else {
                 headers = new Headers();
             }
-            headers.set('x-mastra-auth-token', token);
+            headers.set('Authorization', 'Bearer ' + token);
             return Object.assign({}, init, { headers: headers });
         };
 
@@ -63,7 +63,7 @@
 
         XMLHttpRequest.prototype.send = function () {
             if (this[IS_MASTRA]) {
-                try { this.setRequestHeader('x-mastra-auth-token', token); } catch {}
+                try { this.setRequestHeader('Authorization', 'Bearer ' + token); } catch {}
             }
             return originalSend.apply(this, arguments);
         };

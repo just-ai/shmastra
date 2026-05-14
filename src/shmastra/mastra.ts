@@ -40,7 +40,7 @@ export const createMastra = async (config: Config) => {
       port: serverPort,
       cors: config.server?.cors || (process.env.CORS_ORIGIN ? {
         origin: process.env.CORS_ORIGIN.split(' ').map(s => s.trim()).filter(Boolean),
-        allowHeaders: ["Content-Type", "Authorization", "x-mastra-auth-token", "x-mastra-client-type"],
+        allowHeaders: ["Content-Type", "Authorization", "x-mastra-client-type", "x-mastra-dev-playground"],
         credentials: true,
       } : undefined),
       auth: config.server?.auth || (process.env.MASTRA_AUTH_TOKEN ? new ShmastraAuth({

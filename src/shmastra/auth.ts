@@ -125,15 +125,10 @@ export class ShmastraAuth extends MastraAuthProvider<UserSession> {
   }
 }
 
-const AUTH_HEADERS = ["x-mastra-auth-token", "authorization"];
-
 function extractToken(request: { header: (name: string) => string | undefined }): string | undefined {
-  for (const name of AUTH_HEADERS) {
-    const raw = request.header(name);
-    if (!raw) continue;
-    return raw.replace(/^Bearer\s+/i, "").trim();
-  }
-  return undefined;
+  const raw = request.header("authorization");
+  if (!raw) return undefined;
+  return raw.replace(/^Bearer\s+/i, "").trim();
 }
 
 /**
