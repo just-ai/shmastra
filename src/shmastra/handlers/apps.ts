@@ -15,11 +15,15 @@ function jsString(value: string): string {
 
 async function injectGlobals(html: string, config: Config): Promise<string> {
   const apiPrefix = config.server?.apiPrefix || "/api";
-  const token = process.env.MASTRA_AUTH_TOKEN ?? "";
 
+  // We deliberately do NOT inject `window.MASTRA_AUTH_TOKEN` here. The
+  // token belongs to the user who owns this sandbox; baking it into the
+  // HTML response would let anyone who can fetch this URL pull it out.
+  // Whoever renders the page for the actual viewer (e.g. Shmastra Cloud)
+  // is responsible for injecting a per-viewer token before shmastra.js
+  // runs.
   const script = `<script>
 window.MASTRA_API_PREFIX=${jsString(apiPrefix)};
-window.MASTRA_AUTH_TOKEN=${jsString(token)};
 </script>`;
 
   const shmastraScript = `<script src="/shmastra/public/script/shmastra.js"></script>`;
