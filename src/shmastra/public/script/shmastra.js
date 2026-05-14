@@ -91,16 +91,22 @@
     }
 
     if (isApp) {
-        // On an app page, only load the coding widget when the renderer has
-        // flagged this viewer as the owner. Guests never get it (and even
-        // if they spoofed the flag, /shmastra/api/chat would refuse them).
-        // Widget loads collapsed — the user clicks the floating button to
-        // open the chat.
-        if (window.MASTRA_OWNER) {
-            loadWidget();
-            addScript('upload-file.js');
-            addScript('html-preview.js');
-        }
+        // Ask the server "am I the owner of this sandbox?" — the answer
+        // governs whether to load the 1MB coding-widget bundle. We don't
+        // hardcode any URL-shape knowledge here (e.g. "/apps/shared/")
+        // because sharing is a hosting-layer concept, not a shmastra one;
+        // the only thing shmastra trusts is its own auth role.
+        // Guests get 403 from /shmastra/api/* (authorizeUser deny rule),
+        // standalone-without-auth has no ALS user and falls back to owner.
+        fetch('/shmastra/api/whoami')
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!data || data.role !== 'owner') return;
+                loadWidget();
+                addScript('upload-file.js');
+                addScript('html-preview.js');
+            })
+            .catch(function () {});
         return;
     }
 

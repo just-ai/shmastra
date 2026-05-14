@@ -13,6 +13,7 @@ import {handleStream} from "./stream";
 import {chatHandler} from "./chat";
 import {toolkitAuthHandler, toolkitAuthLinkHandler} from "./connections";
 import {appIndexHandler, appLegacyRedirectHandler, appStaticHandler} from "./apps";
+import {whoamiHandler} from "./whoami";
 import {sessionAlsMiddleware} from "../auth";
 import {Middleware} from "../../mastra/middleware";
 
@@ -69,6 +70,11 @@ export async function withShmastraRoutes(config: Config): Promise<ApiRoute[]> {
       path: "/shmastra/api/version",
       method: "GET",
       handler: versionHandler,
+    },
+    {
+      path: "/shmastra/api/whoami",
+      method: "GET",
+      handler: whoamiHandler,
     },
     {
       path: "/shmastra/api/thread",
