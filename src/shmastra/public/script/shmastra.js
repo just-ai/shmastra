@@ -98,7 +98,7 @@
         // the only thing shmastra trusts is its own auth role.
         // Guests get 403 from /shmastra/api/* (authorizeUser deny rule),
         // standalone-without-auth has no ALS user and falls back to owner.
-        fetch('/shmastra/api/whoami')
+        fetch('/shmastra/api/user')
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
                 if (!data || data.role !== 'owner') return;

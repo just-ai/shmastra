@@ -8,7 +8,7 @@ import {sessionAls} from "../auth";
 // working in single-user dev. Otherwise the role comes from ShmastraAuth,
 // and `authorizeUser` already denies guests every `/shmastra/api/*` route
 // besides files — so a guest never even reaches this handler.
-export const whoamiHandler: Handler = c => {
+export const userHandler: Handler = c => {
     const user = sessionAls.getStore();
     return c.json({role: user?.role ?? "owner"});
 };
