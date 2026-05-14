@@ -15,6 +15,7 @@ import {toolkitAuthHandler, toolkitAuthLinkHandler} from "./connections";
 import {appIndexHandler, appLegacyRedirectHandler, appStaticHandler} from "./apps";
 import {userHandler} from "./user";
 import {sessionAlsMiddleware} from "../auth";
+import {routePermissionsMiddleware} from "../permissions";
 import {Middleware} from "../../mastra/middleware";
 
 export function withShmastraMiddlewares(config: Config): Middleware[] {
@@ -23,9 +24,12 @@ export function withShmastraMiddlewares(config: Config): Middleware[] {
     middlewares = [middlewares];
   }
 
+  const apiPrefix = config.server?.apiPrefix || "/api";
+
   return [
     ...middlewares,
     sessionAlsMiddleware,
+    routePermissionsMiddleware(apiPrefix),
     injectScript,
     handleStream,
   ]
