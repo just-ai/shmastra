@@ -123,15 +123,26 @@ export class ShmastraAuth extends MastraAuthProvider<UserSession> {
   async authorizeUser(user: UserSession, request: HonoRequest): Promise<boolean> {
     if (user.role === "owner") return true;
 
+    // Mastra's coreAuthMiddleware actually hands us the raw web `Request`
+    // here (not a `HonoRequest`) — the abstract signature in @mastra/core
+    // lies. Cast through to reach `.headers.get(...)` and `.url`.
+    const req = request as unknown as Request;
+    const pathname = new URL(req.url).pathname;
+
+    // Everything under `/shmastra/api/*` is owner-tooling: the mastracode
+    // coding agent (`/chat`, `/answer`, `/thread`) literally rewrites the
+    // Mastra server, `/vars` edits .env, `/connection` runs Composio OAuth.
+    // Guests have no business calling any of it. File up/download is the
+    // one exception — apps need it for attachments.
+    if (pathname.startsWith("/shmastra/api/") && !pathname.startsWith("/shmastra/api/files")) {
+      return false;
+    }
+
     // Guest may only call API endpoints reachable from their share page.
     // The browser sends `Referer: https://<cloud>/<referrer>...` for every
     // request originating from that page, so we just check the pathname
     // prefix matches the share URL we wrote into the session file.
-    //
-    // Note: Mastra's coreAuthMiddleware actually hands us the raw web
-    // `Request` here (not a `HonoRequest`) — the abstract signature in
-    // @mastra/core lies. Cast through to reach `.headers.get(...)`.
-    const referer = (request as unknown as Request).headers.get("referer");
+    const referer = req.headers.get("referer");
     if (!referer) return false;
     try {
       const path = new URL(referer).pathname;
