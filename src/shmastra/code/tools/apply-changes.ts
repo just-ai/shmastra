@@ -10,7 +10,7 @@ export const createApplyChangesTool = (provider: ShmastraProvider) =>
         description: "Apply your changes. If you need to be notified once Mastra server was restarted with your changes - set notify param to true.",
         inputSchema: z.object({
             notify: z.boolean().describe("Notify you once changes were applied actually and Mastra server was restarted"),
-            files: z.array(z.string()).describe("Non-empty file paths that added, removed or changed in this commit"),
+            files: z.array(z.string()).min(1).describe("Non-empty file paths that added, removed or changed in this commit"),
         }),
         execute: async (inputData) => {
             try {
