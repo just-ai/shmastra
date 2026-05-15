@@ -1,7 +1,7 @@
 import {spawn, execSync} from "node:child_process";
 import path from "node:path";
 
-const TIMEOUT_MS = 30_000;
+const TIMEOUT_MS = 60_000;
 const KILL_GRACE_MS = 3_000;
 const READY_PATTERN = /watching for file changes/;
 

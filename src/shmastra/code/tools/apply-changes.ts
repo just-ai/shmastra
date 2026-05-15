@@ -14,9 +14,11 @@ export const createApplyChangesTool = (provider: ShmastraProvider) =>
         }),
         execute: async (inputData) => {
             try {
-                await dryRun(getWorkdir(), { silent: true });
-                const version = provider.harness.applyChanges();
                 const bundled = inputData.files.some(f => !f.includes("public/apps/"));
+                if (bundled) {
+                    await dryRun(getWorkdir(), { silent: true });
+                }
+                const version = provider.harness.applyChanges();
                 return {
                     version,
                     bundled,
