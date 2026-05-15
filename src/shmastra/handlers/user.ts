@@ -1,5 +1,5 @@
 import {Handler} from "hono";
-import {sessionAls} from "../auth";
+import {getCurrentUserSession} from "../auth";
 
 // Lets the client ask "who am I, on this token?" — used by shmastra.js on
 // app pages to decide whether to load the coding widget (owner-only).
@@ -9,6 +9,9 @@ import {sessionAls} from "../auth";
 // and `authorizeUser` already denies guests every `/shmastra/api/*` route
 // besides files — so a guest never even reaches this handler.
 export const userHandler: Handler = c => {
-    const user = sessionAls.getStore();
-    return c.json({role: user?.role ?? "owner"});
+    const user = getCurrentUserSession();
+    return c.json({
+        id: user?.userId ?? "",
+        role: user?.role ?? "owner"
+    });
 };
