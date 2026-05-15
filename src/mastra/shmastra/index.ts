@@ -137,3 +137,9 @@ export { createWebSearchTool } from "../../shmastra/tools";
  * ```
  */
 export { createAgentBrowser } from "../../shmastra/browser";
+
+/**
+ * Get current user session.
+ * Returns `{ userId: string, role: 'owner' | 'guest' } | undefined`
+ */
+export { getCurrentUserSession } from '../../shmastra/auth';

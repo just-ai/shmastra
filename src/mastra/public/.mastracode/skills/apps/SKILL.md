@@ -169,6 +169,19 @@ const data = await res.json();
 **Only create custom routes when the Mastra API (agents, workflows, tools) is not enough.** 
 Prefer calling workflows, agents and tools over custom routes.
 
+## Current user
+
+You can read the current user via `getCurrentUserSession()` from `src/mastra/shmastra`:
+
+```ts
+import { getCurrentUserSession } from '../shmastra';
+
+const user = getCurrentUserSession();
+// { userId: string, role: 'owner' | 'guest' } | undefined
+```
+
+Use `user.userId` whenever app logic needs to bind data to a specific person — per-user records in storage, scoped queries, etc.
+
 ## Rules
 
 1. **Route path prefix** — all custom API routes must use `/shmastra/api/apps/<app-name>/` prefix
