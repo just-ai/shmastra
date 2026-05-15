@@ -15,3 +15,4 @@ files
 .vercel
 .DS_Store
 coverage
+.sessions

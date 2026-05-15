@@ -1,5 +1,6 @@
 import {ModelsDevGateway, PROVIDER_REGISTRY, defaultGateways, type GatewayLanguageModel, type ProviderConfig} from "@mastra/core/llm";
 import {createGoogleGenerativeAI} from "@ai-sdk/google";
+import {getCurrentUserSession} from "./auth";
 
 const modelsDevProviders = Object.fromEntries(
   Object.entries(PROVIDER_REGISTRY).filter(([, c]) => (c as ProviderConfig).gateway === "models.dev")
@@ -15,6 +16,37 @@ const PROVIDER_FACTORIES: Record<string, (modelId: string) => ProviderFactory> =
 const baseUrlEnv = (providerId: string) =>
   process.env[`${providerId.toUpperCase().replace(/-/g, "_")}_BASE_URL`];
 
+function sessionHeaders(): Record<string, string> {
+  const user = getCurrentUserSession();
+  if (!user) return {};
+  return {
+    "x-shmastra-user-id": user.userId,
+    ...(user.role === "guest" ? {"x-shmastra-session-key": user.sessionKey} : {}),
+  };
+}
+
+/**
+ * Wraps the model's per-request `config.headers()` to add `x-shmastra-user-id`
+ * and `x-shmastra-session-key` read from the current guest session in
+ * AsyncLocalStorage. AI SDK providers store header construction as a function
+ * on `config.headers` (see e.g. @ai-sdk/openai dist/index.js:6684) and call it
+ * on every outgoing HTTP request — so wrapping it once per resolved model gives
+ * us per-request session attribution without a globalThis.fetch patch and
+ * without taking over provider construction. Works generically for any AI SDK
+ * provider following this convention.
+ */
+export function injectSessionHeaders<T extends GatewayLanguageModel>(model: T): T {
+  const cfg = (model as unknown as {config?: {headers?: unknown}}).config;
+  const original = cfg?.headers;
+  if (cfg && typeof original === "function") {
+    cfg.headers = () => ({
+      ...(original as () => Record<string, string>)(),
+      ...sessionHeaders(),
+    });
+  }
+  return model;
+}
+
 export class BaseUrlGateway extends ModelsDevGateway {
   constructor() {
     super(modelsDevProviders);
@@ -28,14 +60,10 @@ export class BaseUrlGateway extends ModelsDevGateway {
   }): Promise<GatewayLanguageModel> {
     const baseURL = baseUrlEnv(args.providerId);
     const factory = PROVIDER_FACTORIES[args.providerId];
-    if (baseURL && factory) {
-      return factory(args.modelId)({
-        apiKey: args.apiKey,
-        baseURL,
-        headers: args.headers,
-      });
-    }
-    return super.resolveLanguageModel(args);
+    const model = baseURL && factory
+      ? factory(args.modelId)({apiKey: args.apiKey, baseURL, headers: args.headers})
+      : await super.resolveLanguageModel(args);
+    return injectSessionHeaders(model);
   }
 }
 

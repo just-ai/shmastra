@@ -2,6 +2,7 @@ import { createMastraCode } from 'mastracode'
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
+import { ReadableStream } from 'node:stream/web'
 
 import { OBSERVER_MODELS, DEVELOPER_MODELS, findAvailableModel } from '../providers'
 import {Config} from "@mastra/core/mastra";
@@ -330,6 +331,13 @@ function installOmFailureSuppression(harness: ShmastraHarness) {
 }
 
 function installStream(harness: any) {
+    // In @mastra/core 0.18+ harness.sendMessage no longer routes through
+    // `processStream(response)` — it goes via `sendSignal` and a per-thread
+    // subscription consumed by `processSubscribedThreadStream`. So we open
+    // our own independent subscription via `agent.subscribeToThread` (each
+    // subscriber gets its own async-generator stream backed by a fresh
+    // `MastraModelOutput.fullStream` reader) and fire `sendMessage` to drive
+    // a new run into it.
     harness.streamMessage = async function (params: {
         content: string;
         files?: Array<{ data: string; mediaType: string; filename?: string }>;
@@ -337,42 +345,35 @@ function installStream(harness: any) {
         tracingOptions?: TracingOptions;
         requestContext?: RequestContext;
     }): Promise<MastraModelOutput> {
-        const originalProcessStream: Function =
-            Object.getPrototypeOf(this).processStream;
+        const agent: Agent = this.getCurrentMode().agent;
 
-        let resolveResponse!: (response: MastraModelOutput) => void;
-        let rejectResponse!: (err: unknown) => void;
-        const responsePromise = new Promise<MastraModelOutput>(
-            (resolve, reject) => {
-                resolveResponse = resolve;
-                rejectResponse = reject;
-            },
-        );
+        if (!this.getCurrentThreadId()) {
+            const thread = await this.createThread();
+            await this.switchThread({ threadId: thread.id });
+        }
+        const threadId = this.getCurrentThreadId();
 
-        this.processStream = function (response: MastraModelOutput, requestContext: RequestContext) {
-            // ReadableStream has a native .tee() method
-            const [branchInternal, branchExternal] = response.fullStream.tee();
-
-            // Return the full response to the caller, with the external branch
-            resolveResponse({
-                ...response,
-                fullStream: branchExternal,
-            } as MastraModelOutput);
-
-            // Remove instance override, restore prototype method
-            delete this.processStream;
-
-            // Call original processStream with the internal branch
-            return originalProcessStream.call(this, {
-                ...response,
-                fullStream: branchInternal,
-            }, requestContext);
-        };
-
-        this.sendMessage(params).catch((err: unknown) => {
-            rejectResponse(err);
+        const subscription = await agent.subscribeToThread({
+            resourceId: this.resourceId,
+            threadId,
         });
 
-        return responsePromise;
+        const fullStream = ReadableStream.from((async function* () {
+            try {
+                for await (const chunk of subscription.stream) {
+                    yield chunk;
+                    const t = (chunk as { type?: string })?.type;
+                    if (t === 'finish' || t === 'error' || t === 'abort' || t === 'tool-call-suspended') break;
+                }
+            } finally {
+                subscription.unsubscribe();
+            }
+        })());
+
+        this.sendMessage(params).catch(() => {
+            subscription.unsubscribe();
+        });
+
+        return { fullStream } as unknown as MastraModelOutput;
     };
 }

@@ -3,7 +3,7 @@ import {startShmastraWizard} from "./wizard";
 import {getPublicUrl, isDevMode, isDryRun, sandboxId} from "./env";
 import {withShmastraMiddlewares, withShmastraRoutes} from "./handlers";
 import {patchAgentStream} from "./utils";
-import {SimpleAuth} from "@mastra/core/server";
+import {ShmastraAuth} from "./auth";
 import {installBaseUrlGateway} from "./gateway";
 
 installBaseUrlGateway();
@@ -40,15 +40,24 @@ export const createMastra = async (config: Config) => {
       port: serverPort,
       cors: config.server?.cors || (process.env.CORS_ORIGIN ? {
         origin: process.env.CORS_ORIGIN.split(' ').map(s => s.trim()).filter(Boolean),
-        allowHeaders: ["Content-Type", "Authorization", "x-mastra-auth-token", "x-mastra-client-type"],
+        allowHeaders: ["Content-Type", "Authorization", "x-mastra-client-type", "x-mastra-dev-playground"],
         credentials: true,
       } : undefined),
-      auth: config.server?.auth || (process.env.MASTRA_AUTH_TOKEN ? new SimpleAuth({
-        headers: ["x-mastra-auth-token", "Authorization"],
-        tokens: {
-          [process.env.MASTRA_AUTH_TOKEN]: { role: "owner" }
-        },
-        public: [/\/public\//, /\/files\//],
+      auth: config.server?.auth || (process.env.MASTRA_AUTH_TOKEN ? new ShmastraAuth({
+        ownerToken: process.env.MASTRA_AUTH_TOKEN,
+        // App HTML (/apps/:name) requires auth — only the renderer (e.g. Cloud)
+        // calling with the owner VK can fetch it. App sub-paths
+        // (/apps/:name/foo.js, /foo.png) stay public because the browser
+        // fetches them tag-style and can't supply auth headers.
+        // File downloads (/shmastra/api/files/<name>) are public; uploads
+        // (POST /shmastra/api/files, no trailing path) require auth.
+        public: [
+          /^\/public\//,
+          /^\/apps\/[^/]+\/.+/,
+          /^\/shmastra\/public\//,
+          /^\/shmastra\/apps\//,
+          /^\/shmastra\/api\/files\/.+/,
+        ],
       }) : undefined),
     }
   };

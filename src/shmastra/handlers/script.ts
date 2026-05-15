@@ -17,20 +17,12 @@ async function isStudioPath(path: string) {
     return path === (_studioBase || "/") || studioPaths.some(p => path === p || path.startsWith(`${_studioBase}${p}`));
 }
 
-function jsString(value: string): string {
-    return JSON.stringify(value).replace(/</g, "\\u003c");
-}
-
 export const injectScript: Middleware = async (c, next) => {
     await next()
     if (isDevMode && c.req.method === 'GET' && await isStudioPath(c.req.path) && c.res.headers.get('content-type')?.includes('text/html')) {
         const html = await c.res.text()
-        const token = process.env.MASTRA_AUTH_TOKEN ?? ""
-        const globals = `<script>window.MASTRA_AUTH_TOKEN=${jsString(token)};</script>`
         const shmastraScript = `<script src="/shmastra/public/script/shmastra.js"></script>`
-        const modified = html
-            .replace('<head>', `<head>${globals}`)
-            .replace('</head>', `${shmastraScript}</head>`)
+        const modified = html.replace('</head>', `${shmastraScript}</head>`)
         c.res = new Response(modified, c.res)
     }
 }

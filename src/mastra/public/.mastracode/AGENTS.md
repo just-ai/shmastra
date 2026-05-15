@@ -86,6 +86,13 @@ It is MANDATORY to make your changes appear in Mastra Studio for user.
 
 **DO NOT build project with `npm run build` - use `apply_changes` tool instead**
 
+### Parameters
+
+- `files` (required, non-empty array of strings): paths of every file you added, removed, or modified in this turn — relative to project root (e.g. `src/mastra/agents/my-agent.ts`, `src/mastra/public/apps/my-app/index.html`).
+  This list lets `apply_changes` decide whether the Mastra server needs a rebuild and restart: changes confined to `src/mastra/public/apps/**` (static app files) are picked up live, everything else requires a restart.
+  **Always pass every changed path** — omitting a non-static file makes the tool report "no restart needed" even when one is required, and the user will not see your changes.
+- `notify` (required, boolean): see "Apply changes notification" below.
+
 IMPORTANT: if `apply_changes` returns error - fix it and call `apply_changes` again until you fix all errors.
 `success: false` flag means that there is an error even if `error` field doesn't contain actual error message.
 

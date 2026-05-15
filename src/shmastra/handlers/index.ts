@@ -12,7 +12,10 @@ import {injectScript} from "./script";
 import {handleStream} from "./stream";
 import {chatHandler} from "./chat";
 import {toolkitAuthHandler, toolkitAuthLinkHandler} from "./connections";
-import {appIndexHandler, appStaticHandler} from "./apps";
+import {appIndexHandler, appStaticHandler, redirectHandler} from "./apps";
+import {userHandler} from "./user";
+import {sessionAlsMiddleware} from "../auth";
+import {routePermissionsMiddleware} from "../permissions";
 import {Middleware} from "../../mastra/middleware";
 
 export function withShmastraMiddlewares(config: Config): Middleware[] {
@@ -21,8 +24,12 @@ export function withShmastraMiddlewares(config: Config): Middleware[] {
     middlewares = [middlewares];
   }
 
+  const apiPrefix = config.server?.apiPrefix || "/api";
+
   return [
     ...middlewares,
+    sessionAlsMiddleware,
+    routePermissionsMiddleware(apiPrefix),
     injectScript,
     handleStream,
   ]
@@ -32,20 +39,31 @@ export async function withShmastraRoutes(config: Config): Promise<ApiRoute[]> {
   const routes = config.server?.apiRoutes || [];
   const code: ShmastraCode = await createShmastraCode(config);
 
-  const apiPrefix = config.server?.apiPrefix || "/api";
-  const apiPath = (path: string) => `${apiPrefix}${path}`;
-
   return [
     ...routes,
+    // App pages served at /apps/<name>. Cloud's /apps/[appName] and
+    // /apps/shared/[shareId] routes fetch HTML from these paths.
     {
-      path: "/shmastra/apps/:appName",
+      path: "/apps/:appName",
       method: "GET",
       handler: appIndexHandler(config),
     },
     {
-      path: "/shmastra/apps/:appName/:path{.+}",
+      path: "/apps/:appName/:path{.+}",
       method: "GET",
       handler: appStaticHandler,
+    },
+    // Legacy redirects so old bookmarks / agent-generated markdown links
+    // pointing at /shmastra/apps/<name> still land on /apps/<name>.
+    {
+      path: "/shmastra/apps/:appName",
+      method: "GET",
+      handler: redirectHandler("/apps/:appName"),
+    },
+    {
+      path: "/shmastra/apps/:appName/:path{.+}",
+      method: "GET",
+      handler: redirectHandler("/apps/:appName/:path"),
     },
     {
       path: "/shmastra/public/:path{.+}",
@@ -56,6 +74,11 @@ export async function withShmastraRoutes(config: Config): Promise<ApiRoute[]> {
       path: "/shmastra/api/version",
       method: "GET",
       handler: versionHandler,
+    },
+    {
+      path: "/shmastra/api/user",
+      method: "GET",
+      handler: userHandler,
     },
     {
       path: "/shmastra/api/thread",
@@ -101,18 +124,6 @@ export async function withShmastraRoutes(config: Config): Promise<ApiRoute[]> {
       path: "/shmastra/api/files/:fileName{.+}",
       method: "GET",
       handler: getFileHandler,
-    },
-    {
-      path: apiPath("/files"),
-      method: "POST",
-      handler: uploadHandler,
-      openapi: uploadOpenapi,
-    },
-    {
-      path: apiPath("/files/:fileName{.+}"),
-      method: "GET",
-      handler: getFileHandler,
-      openapi: getFileOpenapi,
     },
   ];
 }

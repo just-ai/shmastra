@@ -67,7 +67,7 @@ If running shmastra standalone, the scheduler tools are simply unavailable.
   - `storage/` — composite store: LibSQL (default) + DuckDB (observability)
   - `routes/`, `middleware/` — custom API routes and Hono middleware
   - `public/.mastracode/` — skill definitions for the coding agent in Mastra Studio
-  - `public/apps/` — user-created web apps (served at `/shmastra/apps/<name>`, no build step, Preact + htm + DaisyUI via CDN)
+  - `public/apps/` — user-created web apps (served at `/apps/<name>`, no build step, Preact + htm + DaisyUI via CDN)
 
 ### Request flow
 
