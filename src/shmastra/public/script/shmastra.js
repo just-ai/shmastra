@@ -86,6 +86,7 @@
         addScript('assistant-widget.iife.js', function () {
             AssistantWidget.initAssistantWidget({
                 apiBaseUrl: API_BASE_URL,
+                openOnStart: !isApp,
             });
         });
     }
@@ -101,12 +102,13 @@
         fetch('/shmastra/api/user')
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
-                if (!data || data.role !== 'owner') return;
-                loadWidget();
+                if (data && data.role === 'owner') loadWidget();
+            })
+            .catch(function () {})
+            .finally(function () {
                 addScript('upload-file.js');
                 addScript('html-preview.js');
-            })
-            .catch(function () {});
+            });
         return;
     }
 
