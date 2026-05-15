@@ -12,7 +12,7 @@ import {injectScript} from "./script";
 import {handleStream} from "./stream";
 import {chatHandler} from "./chat";
 import {toolkitAuthHandler, toolkitAuthLinkHandler} from "./connections";
-import {appIndexHandler, appLegacyRedirectHandler, appStaticHandler} from "./apps";
+import {appIndexHandler, appStaticHandler, redirectHandler} from "./apps";
 import {userHandler} from "./user";
 import {sessionAlsMiddleware} from "../auth";
 import {routePermissionsMiddleware} from "../permissions";
@@ -58,12 +58,12 @@ export async function withShmastraRoutes(config: Config): Promise<ApiRoute[]> {
     {
       path: "/shmastra/apps/:appName",
       method: "GET",
-      handler: appLegacyRedirectHandler,
+      handler: redirectHandler("/apps/:appName"),
     },
     {
       path: "/shmastra/apps/:appName/:path{.+}",
       method: "GET",
-      handler: appLegacyRedirectHandler,
+      handler: redirectHandler("/apps/:appName/:path"),
     },
     {
       path: "/shmastra/public/:path{.+}",

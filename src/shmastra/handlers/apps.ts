@@ -65,14 +65,16 @@ export const appStaticHandler: Handler = async (c) => {
   }
 };
 
-// 308 redirect for the legacy /shmastra/apps/* path. Keeps bookmarks and
-// agent-generated markdown links working now that the canonical path is
-// /apps/<name>.
-export const appLegacyRedirectHandler: Handler = (c) => {
-  const appName = c.req.param("appName") || "";
-  const rest = c.req.param("path");
-  const qIndex = c.req.url.indexOf("?");
-  const search = qIndex >= 0 ? c.req.url.slice(qIndex) : "";
-  const target = rest ? `/apps/${appName}/${rest}${search}` : `/apps/${appName}${search}`;
-  return c.redirect(target, 308);
-};
+// Factory for a permanent (308) redirect handler. The target may contain
+// `:param` tokens that get substituted from the matched route params, so
+// e.g. `redirectHandler("/apps/:appName/:path")` mounted on
+// `/shmastra/apps/:appName/:path{.+}` rewrites bookmarks to the canonical
+// path. The original query string is preserved.
+export const redirectHandler =
+  (target: string): Handler =>
+  (c) => {
+    const resolved = target.replace(/:([A-Za-z_][A-Za-z0-9_]*)/g, (_, name) => c.req.param(name) ?? "");
+    const qIndex = c.req.url.indexOf("?");
+    const search = qIndex >= 0 ? c.req.url.slice(qIndex) : "";
+    return c.redirect(`${resolved}${search}`, 308);
+  };
