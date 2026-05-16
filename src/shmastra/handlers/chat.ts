@@ -5,6 +5,17 @@ import {Handler} from "hono";
 import {resolveFileUrl} from "../files";
 import {RequestContext} from "@mastra/core/request-context";
 
+const MODEL_MIGRATIONS: Record<string, string> = {
+    'anthropic/claude-opus-4-6': 'anthropic/claude-opus-4-7',
+};
+
+const resolveModelId = async (code: ShmastraCode, requestedModelId: string): Promise<string> => {
+    const target = MODEL_MIGRATIONS[requestedModelId];
+    if (!target) return requestedModelId;
+    const available = (await code.harness.listAvailableModels()).filter(m => m.hasApiKey);
+    return available.some(m => m.id === target) ? target : requestedModelId;
+};
+
 type FilePart = {
   type: "file";
   filename: string;
@@ -16,7 +27,8 @@ export const chatHandler = (code: ShmastraCode): Handler => {
   return async c => {
     const signal = c.req.raw.signal;
     const referer = c.req.header('referer');
-    const { messages, modelId, threadId, path: bodyPath, timezone } = await c.req.json();
+    const { messages, modelId: requestedModelId, threadId, path: bodyPath, timezone } = await c.req.json();
+    const modelId = await resolveModelId(code, requestedModelId);
     const path = bodyPath && bodyPath !== "/" ? bodyPath : (referer ? new URL(referer).pathname : "/");
 
     const message = messages[messages.length - 1];

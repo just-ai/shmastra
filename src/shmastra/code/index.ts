@@ -113,9 +113,7 @@ async function initModels(harness: Harness) {
     const availableModels = (await harness.listAvailableModels()).filter(m => m.hasApiKey)
     const currentModelId = harness.getCurrentModelId()
 
-    if (currentModelId === 'anthropic/claude-opus-4-6' && availableModels.some(m => m.id === 'anthropic/claude-opus-4-7')) {
-        await harness.switchModel({ modelId: 'anthropic/claude-opus-4-7' })
-    } else if (!currentModelId || !availableModels.some(m => m.id === currentModelId)) {
+    if (!currentModelId || !availableModels.some(m => m.id === currentModelId)) {
         const developerModel = availableModels.find(m => DEVELOPER_MODELS.some(d => m.id === d))
         if (developerModel) {
             await harness.switchModel({ modelId: developerModel.id })
