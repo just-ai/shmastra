@@ -47,7 +47,7 @@ If running shmastra standalone, the scheduler tools are simply unavailable.
 
 - **`src/shmastra/`** — all Shmastra-specific logic:
   - `mastra.ts` — Mastra factory: runs wizard in dev mode, injects server config, patches agent streams for message deduplication
-  - `handlers/` — Hono HTTP handlers (chat, files, threads, OAuth/Composio, env vars, streaming, apps serving, public URL detection)
+  - `handlers/` — Hono HTTP handlers (chat, files, threads, OAuth/Composio, env vars, streaming, apps serving)
   - `code/` — mastracode harness for sandboxed code generation. Uses subagent pattern for Mastra client operations. `apply_changes` tool runs dry-run builds via `scripts/dry-run.ts`
   - `tools/` — dynamic tool creation (`createAgentTools`, web search)
   - `agents/` — built-in agents (web browser agent with native AgentBrowser)
@@ -61,6 +61,7 @@ If running shmastra standalone, the scheduler tools are simply unavailable.
   - `providers.ts` — model selection by tier (fast/general/best) across OpenAI, Google, Anthropic
   - `wizard/` — interactive setup: OAuth login for providers (OpenAI, Anthropic), API key configuration, Composio setup
   - `env.ts` — .env management, package manager detection (pnpm preferred), public URL resolution
+  - `auth.ts` — `ShmastraAuth` Mastra auth provider; accepts owner token or guest session tokens (`st_*`) backed by `.sessions/<token>.json` files; `sessionAls` + `sessionAlsMiddleware` propagate the resolved `UserSession` (owner or guest role) through request context
 
 - **`src/mastra/`** — Mastra project configuration and registries:
   - `agents/`, `workflows/`, `scorers/` — auto-injected at build time by Mastra CLI
@@ -71,7 +72,7 @@ If running shmastra standalone, the scheduler tools are simply unavailable.
 
 ### Request flow
 
-HTTP request → middleware (public URL, script injection, streaming) → route handlers → mastracode harness → LLM with tools/subagents → `apply_changes` (dry-run build + hot-reload)
+HTTP request → middleware (script injection, streaming) → route handlers → mastracode harness → LLM with tools/subagents → `apply_changes` (dry-run build + hot-reload)
 
 ### Model tiers
 
@@ -101,6 +102,7 @@ Models are selected based on availability (API key present) with fallback order:
 - Environment variables for agents use prefixed naming: `{AGENT_ID_SCREAMING_CASE}_{PLATFORM}_{VAR}` (e.g. `SUPPORT_AGENT_TELEGRAM_BOT_TOKEN`)
 - Default port is 4111, configurable via `PORT` env var
 - Package manager: auto-detects pnpm or npm (pnpm preferred)
+- Auth uses `Authorization: Bearer <token>`; guests (`role: "guest"`) are hard-blocked from all `/shmastra/api/*` except `/shmastra/api/files/<name>`, `/shmastra/api/apps/*`, and `/shmastra/api/user` — add any new guest-accessible endpoint to the allowlist in `auth.ts` `authorizeUser`
 
 ## Environment
 
