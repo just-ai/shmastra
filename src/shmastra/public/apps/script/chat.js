@@ -96,7 +96,6 @@ export function AgentChat(props) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [streaming, setStreaming] = useState('');
   const [files, setFiles] = useState([]);
   const [collapsed, setCollapsed] = useState(false);
   const storageKey = panel ? `chat-width-${agentId}` : null;
@@ -119,7 +118,7 @@ export function AgentChat(props) {
     requestAnimationFrame(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }));
   }, []);
 
-  useEffect(() => { scroll(); }, [messages, streaming]);
+  useEffect(() => { scroll(); }, [messages]);
   useEffect(() => { if (!collapsed) inputRef.current?.focus(); }, [collapsed]);
   useEffect(() => { if (!loading) inputRef.current?.focus(); }, [loading]);
 
@@ -202,12 +201,18 @@ export function AgentChat(props) {
     const fileNames = attachedFiles.map(f => f.fileName);
     const msgContent = text.trim() + (fileNames.length ? '\n\nAttached files: ' + fileNames.join(', ') : '');
     const userMsg = { role: 'user', content: text.trim(), files: attachedFiles.map(f => f.name) };
-    setMessages(prev => [...prev, userMsg]);
+    const asstPlaceholder = { role: 'assistant', content: '', streaming: true };
+    setMessages(prev => [...prev, userMsg, asstPlaceholder]);
     setInput('');
     setFiles([]);
     setLoading(true);
-    setStreaming('');
     onMessage?.(userMsg);
+
+    const updateLast = (patch) => setMessages(prev => {
+      const next = prev.slice();
+      next[next.length - 1] = { ...next[next.length - 1], ...patch };
+      return next;
+    });
 
     try {
       const agent = mastra.getAgent(agentId);
@@ -220,19 +225,24 @@ export function AgentChat(props) {
         onChunk(chunk) {
           if (chunk.type === 'text-delta' && chunk.payload?.text) {
             full += chunk.payload.text;
-            setStreaming(full);
+            updateLast({ content: full });
           }
         },
       });
-      setStreaming('');
-      const asstMsg = { role: 'assistant', content: full };
-      setMessages(prev => [...prev, asstMsg]);
-      onMessage?.(asstMsg);
+      updateLast({ content: full, streaming: false });
+      onMessage?.({ role: 'assistant', content: full });
     } catch (err) {
       if (err?.name !== 'AbortError') {
-        const errMsg = { role: 'assistant', content: `Error: ${err?.message || 'Unknown error'}` };
-        setMessages(prev => [...prev, errMsg]);
+        updateLast({ content: `Error: ${err?.message || 'Unknown error'}`, streaming: false });
         onError?.(err);
+      } else {
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last?.role === 'assistant' && last.streaming && !last.content) return prev.slice(0, -1);
+          const next = prev.slice();
+          if (last?.streaming) next[next.length - 1] = { ...last, streaming: false };
+          return next;
+        });
       }
     }
     setLoading(false);
@@ -240,7 +250,7 @@ export function AgentChat(props) {
 
   const newChat = () => {
     abort();
-    setMessages([]); setStreaming(''); setLoading(false);
+    setMessages([]); setLoading(false);
     threadRef.current = genThreadId(agentId);
     inputRef.current?.focus();
     onNewChat?.();
@@ -250,7 +260,7 @@ export function AgentChat(props) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input); }
   };
 
-  const empty = messages.length === 0 && !streaming;
+  const empty = messages.length === 0;
 
   // Panel mode: collapsible + resizable wrapper
   if (panel) {
@@ -319,24 +329,13 @@ export function AgentChat(props) {
               `
               : html`
                 <div key=${i} class="sc-msg sc-msg-asst">
-                  <div class="sc-asst-body" dangerouslySetInnerHTML=${{ __html: md(m.content) }} />
+                  ${m.streaming && !m.content
+                    ? html`<div class="sc-asst-body"><div class="sc-dots"><span class="sc-dot"/><span class="sc-dot"/><span class="sc-dot"/></div></div>`
+                    : html`<div class="sc-asst-body" dangerouslySetInnerHTML=${{ __html: md(m.content) }} />`
+                  }
                 </div>
               `
           )}
-
-          ${streaming && html`
-            <div class="sc-msg sc-msg-asst">
-              <div class="sc-asst-body" dangerouslySetInnerHTML=${{ __html: md(streaming) }} />
-            </div>
-          `}
-
-          ${loading && !streaming && html`
-            <div class="sc-msg sc-msg-asst">
-              <div class="sc-asst-body">
-                <div class="sc-dots"><span class="sc-dot"/><span class="sc-dot"/><span class="sc-dot"/></div>
-              </div>
-            </div>
-          `}
 
           <div ref=${endRef} />
         </div>
