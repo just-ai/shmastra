@@ -1,8 +1,11 @@
 import {createTool} from "@mastra/core/tools";
 import {ShmastraProvider} from "../types";
 import {getWorkdir} from "../../files";
+import {diffWorkdirAndProject} from "../sync";
 import {dryRun, DryRunTimeoutError} from "../../../../scripts/dry-run";
 import {z} from "zod";
+
+const APPS_PREFIX = "src/mastra/public/apps/";
 
 export const createApplyChangesTool = (provider: ShmastraProvider) =>
     createTool({
@@ -10,11 +13,11 @@ export const createApplyChangesTool = (provider: ShmastraProvider) =>
         description: "Apply your changes. If you need to be notified once Mastra server was restarted with your changes - set notify param to true.",
         inputSchema: z.object({
             notify: z.boolean().describe("Notify you once changes were applied actually and Mastra server was restarted"),
-            files: z.array(z.string()).min(1).describe("Non-empty file paths that added, removed or changed in this commit"),
         }),
         execute: async (inputData) => {
             try {
-                const bundled = inputData.files.some(f => !f.includes("public/apps/"));
+                const changed = diffWorkdirAndProject();
+                const bundled = changed.some(f => !f.startsWith(APPS_PREFIX));
                 if (bundled) {
                     await dryRun(getWorkdir(), { silent: true });
                 }
@@ -22,6 +25,7 @@ export const createApplyChangesTool = (provider: ShmastraProvider) =>
                 return {
                     version,
                     bundled,
+                    changed,
                     success: true,
                     instructions: bundled
                         ? `Finish conversation. Changes will be applied after your last message in this turn. ${inputData.notify ? "You will receive automatic message once changes are actually applied." : ""}`

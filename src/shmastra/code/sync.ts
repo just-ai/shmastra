@@ -228,6 +228,82 @@ async function executeSyncPlan(plan: SyncPlan, fresh = false): Promise<void> {
     if (!fresh) logSyncResults(copied, plan.pathsToDelete, nmStats)
 }
 
+function diffWalk(
+    src: string,
+    dst: string,
+    srcRoot: string,
+    dstRoot: string,
+    patterns: string[],
+    changed: string[],
+): void {
+    const srcEntries = new Set(fs.existsSync(src) ? fs.readdirSync(src) : [])
+    const dstEntries = new Set(fs.existsSync(dst) ? fs.readdirSync(dst) : [])
+    const allEntries = new Set([...srcEntries, ...dstEntries])
+
+    for (const entry of allEntries) {
+        if (SKIP_COPY.has(entry)) continue
+        if (entry === 'node_modules') continue
+
+        const srcPath = path.join(src, entry)
+        const dstPath = path.join(dst, entry)
+        const inSrc = srcEntries.has(entry)
+        const inDst = dstEntries.has(entry)
+        const relPath = inSrc
+            ? path.relative(srcRoot, srcPath)
+            : path.relative(dstRoot, dstPath)
+        if (isGitignored(relPath, patterns)) continue
+
+        if (inSrc && inDst) {
+            const srcStat = fs.statSync(srcPath)
+            const dstStat = fs.statSync(dstPath)
+            if (srcStat.isDirectory() && dstStat.isDirectory()) {
+                diffWalk(srcPath, dstPath, srcRoot, dstRoot, patterns, changed)
+            } else if (srcStat.isDirectory() !== dstStat.isDirectory()) {
+                changed.push(relPath)
+            } else if (
+                srcStat.size !== dstStat.size ||
+                Math.round(srcStat.mtimeMs) !== Math.round(dstStat.mtimeMs)
+            ) {
+                changed.push(relPath)
+            }
+        } else if (inSrc) {
+            const stat = fs.statSync(srcPath)
+            if (stat.isDirectory()) collectAllFiles(srcPath, srcRoot, patterns, changed)
+            else changed.push(relPath)
+        } else {
+            const stat = fs.statSync(dstPath)
+            if (stat.isDirectory()) collectAllFiles(dstPath, dstRoot, patterns, changed)
+            else changed.push(relPath)
+        }
+    }
+}
+
+function collectAllFiles(dir: string, root: string, patterns: string[], out: string[]): void {
+    for (const entry of fs.readdirSync(dir)) {
+        if (SKIP_COPY.has(entry)) continue
+        if (entry === 'node_modules') continue
+        const p = path.join(dir, entry)
+        const rel = path.relative(root, p)
+        if (isGitignored(rel, patterns)) continue
+        const stat = fs.statSync(p)
+        if (stat.isDirectory()) collectAllFiles(p, root, patterns, out)
+        else out.push(rel)
+    }
+}
+
+/**
+ * Returns project-relative paths of files that differ between the workdir
+ * (where the coding agent writes) and the original project root. Includes
+ * files added, removed, or modified in either direction.
+ */
+export function diffWorkdirAndProject(dir: string = findProjectRoot()): string[] {
+    const workdir = getWorkdir(dir)
+    const patterns = parseGitignore(path.join(dir, '.gitignore'))
+    const changed: string[] = []
+    diffWalk(workdir, dir, workdir, dir, patterns, changed)
+    return changed
+}
+
 export async function copyProjectToWorkdir(dir: string = findProjectRoot()): Promise<string> {
     const workdir = getWorkdir(dir)
     const fresh = !fs.existsSync(workdir) || fs.readdirSync(workdir).length === 0

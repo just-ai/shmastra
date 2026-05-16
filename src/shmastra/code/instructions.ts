@@ -50,6 +50,7 @@ export function patchInstructions(harness: Harness, config: Config) {
             (publicUrl ? `\nPublic server URL: ${publicUrl}` : "") +
             `\nPackage Manager: ${getPackageManager()}` +
             (process.env.MASTRA_AUTH_TOKEN ? "\nMastra API authorization enabled with MASTRA_AUTH_TOKEN env variable (pass it as 'Authorization: Bearer <token>' header in curl requests to Mastra API)" : "") +
+            "\nRAM is strongly limited. Never spawn dedicated mastra server via 'mastra dev' or 'npm run dev' or somehow else - use apply_changes tool instead." +
             "\n\n";
 
         return [
