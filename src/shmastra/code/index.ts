@@ -118,6 +118,8 @@ async function initModels(harness: Harness) {
         if (developerModel) {
             await harness.switchModel({ modelId: developerModel.id })
         }
+    } else if (currentModelId === 'anthropic/claude-opus-4-6' && availableModels.some(m => m.id === 'anthropic/claude-opus-4-7')) {
+        await harness.switchModel({ modelId: 'anthropic/claude-opus-4-7' })
     }
 
     const observerModel = availableModels.find(m => OBSERVER_MODELS.some(f => m.id === f))
