@@ -2,12 +2,19 @@ import {resolveFileUrl} from "../files";
 import {getMastra} from "../utils";
 import {Middleware} from "../../mastra/middleware";
 
+const ALLOWED_IMAGE_TYPES = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+]);
+
 let _streamPattern: RegExp | undefined;
 async function getStreamPattern() {
     if (!_streamPattern) {
         const mastra = await getMastra();
         const prefix = mastra.getServer()?.apiPrefix || "/api";
-        _streamPattern = new RegExp(`^${prefix}/agents/[^/]+/stream$`);
+        _streamPattern = new RegExp(`^${prefix}/agents/[^/]+/stream(-until-idle)?$`);
     }
     return _streamPattern;
 }
@@ -18,6 +25,14 @@ export const handleStream: Middleware = async (c, next) => {
         const body = await c.req.json()
 
         if (Array.isArray(body.messages)) {
+            for (const m of body.messages) {
+                if (Array.isArray(m.content)) {
+                    m.content = m.content.filter((p: any) =>
+                        p.type !== 'image' || (p.mimeType && ALLOWED_IMAGE_TYPES.has(p.mimeType))
+                    )
+                }
+            }
+
             const imageParts = body.messages
                 .flatMap((m: any) => Array.isArray(m.content) ? m.content : [])
                 .filter((p: any) => p.type === 'image' && typeof p.image === 'string')
