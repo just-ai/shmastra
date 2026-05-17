@@ -17,7 +17,7 @@ export const createApplyChangesTool = (provider: ShmastraProvider) =>
         execute: async (inputData) => {
             try {
                 const changed = diffWorkdirAndProject();
-                const bundled = changed.some(f => !f.startsWith(APPS_PREFIX));
+                const bundled = !changed.length || changed.some(f => !f.startsWith(APPS_PREFIX));
                 if (bundled) {
                     await dryRun(getWorkdir(), { silent: true });
                 }
