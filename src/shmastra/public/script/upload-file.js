@@ -29,6 +29,19 @@
 
     const origAppendChild = document.body.appendChild.bind(document.body);
 
+    // The assistant-widget bundle creates its own hidden file <input> and appends
+    // it to document.body to drive its built-in attachment flow. Without this
+    // guard we'd hijack that input too, upload the file once via /files, replace
+    // it with an empty File placeholder, and the widget would then upload that
+    // empty placeholder again — corrupting the attachment.
+    function isFromAssistantWidget() {
+        try {
+            return new Error().stack?.includes('assistant-widget') ?? false;
+        } catch {
+            return false;
+        }
+    }
+
     const style = document.createElement('style');
     style.textContent = `
         @keyframes upload-spin {
@@ -65,7 +78,7 @@
     document.head.appendChild(style);
 
     document.body.appendChild = function (node) {
-        if (node.nodeName === 'INPUT' && node.type === 'file' && node.hidden) {
+        if (node.nodeName === 'INPUT' && node.type === 'file' && node.hidden && !isFromAssistantWidget()) {
             node.removeAttribute('accept');
 
             const origClick = node.click.bind(node);
