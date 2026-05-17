@@ -7,7 +7,7 @@ const AVAILABLE_MODELS = Object.entries(PROVIDER_REGISTRY).flatMap(([id, provide
 })
 
 export const AGENT_MODELS = {
-    fast: ['openai/gpt-5.4-nano', 'google/gemini-3.1-flash-lite-preview', 'anthropic/claude-sonnet-4-6'],
+    fast: ['openai/gpt-5.4-nano', 'google/gemini-3.1-flash-lite', 'anthropic/claude-sonnet-4-6'],
     general: ['openai/gpt-5.4-mini', 'anthropic/claude-sonnet-4-6', 'google/gemini-3-flash-preview'],
     best: ['openai/gpt-5.4', 'anthropic/claude-opus-4-7', 'google/gemini-3.1-pro-preview'],
 }
