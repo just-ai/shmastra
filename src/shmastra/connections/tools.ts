@@ -1,7 +1,6 @@
 import connections from "./index";
 import {createTool} from "@mastra/core/tools";
 import {z} from "zod";
-import {ShmastraProvider} from "../code";
 
 export const searchToolkitsTool = createTool({
     id: "search_toolkits",
@@ -37,18 +36,35 @@ export const executeToolkitTool = createTool({
     }
 });
 
-export const connectToolkitTool = (provider: ShmastraProvider) =>
-    createTool({
-        id: "connect_toolkit",
-        description: "Authorize user in selected toolkit. User will receive authorization link. Tool returns toolkit connection status once user completes auth.",
-        inputSchema: z.object({
-            reason: z.string().describe("Brief reason why you need to connect this toolkit"),
-            toolkit: z.string().describe("Toolkit slug to connect")
-        }),
-        execute: async ({toolkit}) => {
-            await provider.harness.awaitConnectionAuth(toolkit);
-            return {
-                isConnected: await connections.isToolkitConnected(toolkit)
-            }
+const connectResumeSchema = z.object({
+    cancelled: z.boolean().optional(),
+    completed: z.boolean().optional(),
+});
+
+export const connectToolkitTool = createTool({
+    id: "connect_toolkit",
+    description: "Authorize user in selected toolkit. User will receive authorization link. Tool returns toolkit connection status once user completes auth.",
+    inputSchema: z.object({
+        reason: z.string().describe("Brief reason why you need to connect this toolkit"),
+        toolkit: z.string().describe("Toolkit slug to connect")
+    }),
+    suspendSchema: z.object({}),
+    resumeSchema: connectResumeSchema,
+    execute: async ({toolkit}, context) => {
+        const resumeData = context?.agent?.resumeData as z.infer<typeof connectResumeSchema> | undefined;
+        const suspend = context?.agent?.suspend;
+
+        if (!resumeData) {
+            await suspend?.({});
+            return { isConnected: false, suspended: true };
         }
-    });
+
+        if (resumeData.cancelled) {
+            return { isConnected: false, cancelled: true };
+        }
+
+        return {
+            isConnected: await connections.isToolkitConnected(toolkit)
+        };
+    }
+});

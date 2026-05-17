@@ -12,6 +12,6 @@ export const toolkitAuthLinkHandler: Handler = async c => {
 
 export const toolkitAuthHandler = (code: ShmastraCode): Handler => async c => {
     const toolkit = c.req.param('toolkit') || "";
-    code.harness.completeConnectionAuth(toolkit);
+    await code.harness.respondToToolSuspension({ resumeData: { completed: true, toolkit } });
     return c.body(null, 204);
 }

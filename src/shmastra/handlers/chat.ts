@@ -77,17 +77,29 @@ export const chatHandler = (code: ShmastraCode): Handler => {
       files: imageUrls.map((data, i) => ({ ...images[i], data }))
     });
 
+    const handleAbort = () => {
+      const pending = code.harness.getDisplayState().pendingSuspension;
+      if (pending) {
+        code.harness.respondToToolSuspension({ resumeData: { cancelled: true } })
+            .catch(err => console.error("respondToToolSuspension failed", err));
+      } else {
+        code.harness.abort();
+      }
+    };
+
+    signal.addEventListener("abort", handleAbort, { once: true });
+
     const uiMessageStream = createUIMessageStream({
       originalMessages: messages,
       execute: async ({ writer }) => {
-        for await (const part of toAISdkStream(stream, { from: 'agent' })) {
-          if (signal.aborted) {
-            code.harness.abort();
-            break;
+        try {
+          for await (const part of toAISdkStream(stream, { from: 'agent' })) {
+            if (!part.type.startsWith("data-")) {
+              await writer.write(part as any);
+            }
           }
-          if (!part.type.startsWith("data-")) {
-            await writer.write(part as any);
-          }
+        } finally {
+          signal.removeEventListener("abort", handleAbort);
         }
       },
     });

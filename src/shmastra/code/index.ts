@@ -9,19 +9,18 @@ import {Config} from "@mastra/core/mastra";
 import {MastraModelOutput} from "@mastra/core/stream";
 import {Harness} from "@mastra/core/harness";
 import {RequestContext} from "@mastra/core/request-context";
-import {TracingContext, TracingOptions} from "@mastra/core/observability";
-import {getStorageDir, getWorkdir} from "../files";
+import {getStorageDir} from "../files";
 import {copyProjectToWorkdir, copyWorkdirToProject} from "./sync";
 import {patchInstructions} from "./instructions";
 import {createApplyChangesTool} from "./tools/apply-changes";
-import {createAskEnvVarsTool} from "./tools/ask-env-vars-args";
-import {updateEnvContent} from "../env";
+import {askEnvVarsTool} from "./tools/ask-env-vars-args";
 import {ShmastraCode, ShmastraHarness, ShmastraProvider} from "./types";
 import {queryDocumentsTool} from "../rag";
 import {Agent} from "@mastra/core/agent";
 import {mastraClientAgent} from "../client";
 import {searchMcpServersTool} from "../mcp/tools";
-import {deduplicateItemIds} from "../utils";
+import {DEFAULT_MAX_STEPS, deduplicateItemIds} from "../utils";
+import {stepCountIs} from "ai";
 import connections from "../connections";
 import {connectToolkitTool, executeToolkitTool, getToolSchemaTool, searchToolkitsTool} from "../connections/tools";
 import {isDryRun} from "../env";
@@ -51,7 +50,7 @@ export async function createShmastraCode(config: Config): Promise<ShmastraCode> 
             search_toolkits: searchToolkitsTool,
             get_toolkit_tool_schema: getToolSchemaTool,
             execute_toolkit_tool: executeToolkitTool,
-            connect_toolkit: connectToolkitTool(provider),
+            connect_toolkit: connectToolkitTool,
         });
     }
 
@@ -77,7 +76,7 @@ export async function createShmastraCode(config: Config): Promise<ShmastraCode> 
         },
         extraTools: {
             apply_changes: createApplyChangesTool(provider),
-            ask_env_vars_safely: createAskEnvVarsTool(provider),
+            ask_env_vars_safely: askEnvVarsTool,
             query_documents: queryDocumentsTool,
             search_mcp_servers: searchMcpServersTool,
             ...connectionsTools,
@@ -138,8 +137,6 @@ function patchHarness(harness: ShmastraHarness, config: Config) {
     installAnswerQuestion(harness);
     installFindThreadById(harness);
     installApplyChanges(harness);
-    installSetEnvVars(harness);
-    installConnectionStatus(harness);
     restrictSkillPaths(harness);
     filterTools(harness);
 }
@@ -179,7 +176,8 @@ function filterTools(harness: ShmastraHarness) {
         const theirs = options?.prepareStep;
         return originalStream(messages, {
             ...options,
-            prepareStep: async (args) => {
+            stopWhen: options?.stopWhen ?? stepCountIs(DEFAULT_MAX_STEPS),
+            prepareStep: async (args: any) => {
                 const fromTheirs = theirs ? await theirs(args) : undefined;
 
                 let tools = Object.keys(args.tools ?? {});
@@ -197,6 +195,14 @@ function filterTools(harness: ShmastraHarness) {
             }
         });
     };
+
+    const originalResume = agent.resumeStream.bind(agent);
+    agent.resumeStream = function (resumeData: any, options?: any) {
+        return originalResume(resumeData, {
+            ...options,
+            stopWhen: options?.stopWhen ?? stepCountIs(DEFAULT_MAX_STEPS),
+        });
+    } as typeof agent.resumeStream;
 }
 
 function installAnswerQuestion(harness: ShmastraHarness) {
@@ -232,63 +238,6 @@ function installApplyChanges(harness: ShmastraHarness) {
         fs.writeFileSync(path.resolve(projectRootPath, '.version'), version, 'utf8');
         applyChanges = true;
         return version;
-    }
-}
-
-function installSetEnvVars(harness: ShmastraHarness) {
-    const envPath = path.resolve(getWorkdir(), '.env');
-    const promise = {
-        resolve: (vars: string[]) => {},
-        reject: (err: unknown) => {},
-    }
-
-    harness.subscribe(event => {
-       if (event.type === 'agent_end') {
-           promise.reject("agent_end");
-       }
-    });
-
-    harness.askEnvVars = input => {
-        return new Promise((resolve, reject) => {
-            promise.resolve = resolve;
-            promise.reject = reject;
-        });
-    }
-
-    harness.setEnvVars = vars => {
-        const existing = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
-        fs.writeFileSync(envPath, updateEnvContent(existing, vars), 'utf-8');
-        for (const [k, v] of Object.entries(vars)) {
-            if (v != null) process.env[k] = String(v);
-        }
-        promise.resolve(Object.keys(vars));
-    }
-}
-
-function installConnectionStatus(harness: ShmastraHarness) {
-    const connections: Record<string, {
-        resolve: () => void,
-        reject: (err: any) => void,
-    }> = {}
-
-    harness.subscribe(event => {
-        if (event.type === 'agent_end') {
-            Object.values(connections).forEach(({resolve, reject}) => {
-                reject("agent_end");
-            });
-            Object.assign(connections, {});
-        }
-    });
-
-    harness.awaitConnectionAuth = (toolkit: string) => {
-        return new Promise((resolve, reject) => {
-            connections[toolkit] = {resolve, reject};
-        });
-    }
-
-    harness.completeConnectionAuth = (toolkit: string) => {
-        connections[toolkit]?.resolve();
-        delete connections[toolkit];
     }
 }
 
@@ -341,8 +290,6 @@ function installStream(harness: any) {
     harness.streamMessage = async function (params: {
         content: string;
         files?: Array<{ data: string; mediaType: string; filename?: string }>;
-        tracingContext?: TracingContext;
-        tracingOptions?: TracingOptions;
         requestContext?: RequestContext;
     }): Promise<MastraModelOutput> {
         const agent: Agent = this.getCurrentMode().agent;
@@ -353,25 +300,51 @@ function installStream(harness: any) {
         }
         const threadId = this.getCurrentThreadId();
 
-        const subscription = await agent.subscribeToThread({
-            resourceId: this.resourceId,
-            threadId,
-        });
+        // After abort(), the previous run's status can still be "running"
+        // for a few microtasks while the model stream finalizes. If we
+        // subscribe before that completes, the new subscription replays
+        // the aborted run's chunks (including its `start` with an old
+        // messageId), which collides with the message tree on the client
+        // and triggers MessageRepository duplicate-id errors. Mirror the
+        // harness's internal `waitForCurrentThreadStreamIdle`.
+        while (this.isCurrentThreadStreamActive() || this.getCurrentRunId() !== null) {
+            await new Promise(resolve => setTimeout(resolve, 0));
+        }
+
+        const getDisplayState = this.getDisplayState.bind(this);
+        const resourceId = this.resourceId;
 
         const fullStream = ReadableStream.from((async function* () {
-            try {
-                for await (const chunk of subscription.stream) {
-                    yield chunk;
-                    const t = (chunk as { type?: string })?.type;
-                    if (t === 'finish' || t === 'error' || t === 'abort' || t === 'tool-call-suspended') break;
+            // `subscribeToThread` filters re-notifications by a local
+            // `seenRunIds` set, and `resumeStream` re-registers the
+            // suspended run under the SAME runId — so resumed chunks never
+            // reach the original subscriber. Plus, `suspend()` pauses but
+            // does not close the run's output stream, so the for-await
+            // would hang forever after `tool-call-suspended`. Workaround:
+            // explicitly break on suspend and resubscribe with a fresh
+            // `seenRunIds`.
+            while (true) {
+                const sub = await agent.subscribeToThread({ resourceId, threadId });
+                let terminal = false;
+                let suspended = false;
+                try {
+                    for await (const chunk of sub.stream) {
+                        yield chunk;
+                        const t = (chunk as { type?: string })?.type;
+                        if (t === 'error' || t === 'abort') { terminal = true; break; }
+                        if (t === 'tool-call-suspended') { suspended = true; break; }
+                        if (t === 'finish' && !getDisplayState().pendingSuspension) { terminal = true; break; }
+                    }
+                } finally {
+                    sub.unsubscribe();
                 }
-            } finally {
-                subscription.unsubscribe();
+                if (terminal) return;
+                if (!suspended && !getDisplayState().pendingSuspension) return;
             }
         })());
 
-        this.sendMessage(params).catch(() => {
-            subscription.unsubscribe();
+        this.sendMessage(params).catch((err: unknown) => {
+            console.error("sendMessage failed", err);
         });
 
         return { fullStream } as unknown as MastraModelOutput;

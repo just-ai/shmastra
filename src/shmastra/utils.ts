@@ -1,6 +1,9 @@
 import type { Mastra } from "@mastra/core/mastra";
 import { Agent } from "@mastra/core/agent";
 import { PrefillErrorHandler } from "@mastra/core/processors";
+import { stepCountIs } from "ai";
+
+export const DEFAULT_MAX_STEPS = 100;
 
 export async function getMastra(): Promise<Mastra> {
   const { mastra } = await import("../mastra");
@@ -47,6 +50,7 @@ export function patchAgentStream(agent: Agent) {
     const theirs = options?.prepareStep;
     return originalStream(messages, {
       ...options,
+      stopWhen: options?.stopWhen ?? stepCountIs(DEFAULT_MAX_STEPS),
       errorProcessors: [prefillErrorHandler, ...options?.errorProcessors ?? []],
       prepareStep: async (args) => {
         const fromTheirs = theirs ? await theirs(args) : undefined;
@@ -62,6 +66,14 @@ export function patchAgentStream(agent: Agent) {
       }
     });
   }
+
+  const originalResume = agent.resumeStream.bind(agent);
+  agent.resumeStream = function (resumeData: any, options?: any) {
+    return originalResume(resumeData, {
+      ...options,
+      stopWhen: options?.stopWhen ?? stepCountIs(DEFAULT_MAX_STEPS),
+    });
+  } as typeof agent.resumeStream;
 }
 
 export function deduplicateItemIds(messages: any[]): any[] {
