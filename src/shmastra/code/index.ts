@@ -137,8 +137,56 @@ function patchHarness(harness: ShmastraHarness, config: Config) {
     installAnswerQuestion(harness);
     installFindThreadById(harness);
     installApplyChanges(harness);
+    installChainedSuspensionFix(harness);
     restrictSkillPaths(harness);
     filterTools(harness);
+}
+
+
+// Mastra's `handleToolResume` unconditionally clears
+// `pendingSuspensionRunId/ToolCallId` after `await processStream(...)`.
+// If the resumed run hits a NEW tool suspension before finishing (e.g.
+// the agent calls `ask_env_vars_safely` a second time), the harness sets
+// the new pending suspension fields during `processStream`, but they get
+// wiped on return — so the next `respondToToolSuspension` call is a
+// silent no-op. Track new suspensions that fire during a resume and
+// restore them after the original method finishes.
+function installChainedSuspensionFix(harness: ShmastraHarness) {
+    const h = harness as unknown as {
+        pendingSuspensionRunId: string | null;
+        pendingSuspensionToolCallId: string | null;
+        getCurrentRunId(): string | null;
+    };
+
+    const state: {
+        watching: boolean;
+        captured: { runId: string | null; toolCallId: string } | null;
+    } = { watching: false, captured: null };
+
+    harness.subscribe(event => {
+        if (state.watching && event.type === 'tool_suspended') {
+            state.captured = {
+                runId: h.getCurrentRunId(),
+                toolCallId: event.toolCallId,
+            };
+        }
+    });
+
+    const original = harness.respondToToolSuspension.bind(harness);
+    harness.respondToToolSuspension = async function (params: Parameters<typeof original>[0]) {
+        state.watching = true;
+        state.captured = null;
+        try {
+            await original(params);
+        } finally {
+            state.watching = false;
+        }
+        const captured = state.captured as { runId: string | null; toolCallId: string } | null;
+        if (!h.pendingSuspensionRunId && captured?.runId) {
+            h.pendingSuspensionRunId = captured.runId;
+            h.pendingSuspensionToolCallId = captured.toolCallId;
+        }
+    } as typeof harness.respondToToolSuspension;
 }
 
 function restrictSkillPaths(harness: ShmastraHarness) {
@@ -227,7 +275,12 @@ function installApplyChanges(harness: ShmastraHarness) {
     let applyChanges = false;
 
     harness.subscribe(event => {
-        if (applyChanges && event.type === "agent_end") {
+        if (!applyChanges) return;
+        // `agent_end` covers normal completion, suspension, abort, and the
+        // error path from `handleSubscribedStreamError`. `error` is a
+        // belt-and-suspenders in case an error fires without a matching
+        // `agent_end` (shouldn't happen in current mastra core, but cheap).
+        if (event.type === "agent_end" || event.type === "error") {
             applyChanges = false;
             copyWorkdirToProject().catch((err) => console.error(err));
         }
@@ -311,7 +364,24 @@ function installStream(harness: any) {
             await new Promise(resolve => setTimeout(resolve, 0));
         }
 
-        const getDisplayState = this.getDisplayState.bind(this);
+        // After a tool-suspension is resumed via `handleToolResume`, the
+        // harness's long-lived `processSubscribedThreadStream` subscription is
+        // wedged: `handleToolResume` consumes the resumed output through a
+        // SEPARATE `processStream` call (not via the subscription), so the
+        // subscription's per-subscriber `seenRunIds` set still has the
+        // original runId — and once that run's stream closes, the iterator
+        // does not start picking up the next user-message run.
+        // Symptom: on the NEXT turn after any ask_env_vars-style flow, the
+        // model emits `tool-call-suspended` for the new tool call but the
+        // harness never sets `pendingSuspensionRunId` (because the chunk
+        // never reaches `processSubscribedThreadStream`) — so the next
+        // `respondToToolSuspension` is a silent no-op.
+        // Forcing a cleanup here makes `sendSignal` create a fresh
+        // subscription for this turn.
+        if (typeof (this as any).cleanupAgentThreadSubscription === 'function') {
+            (this as any).cleanupAgentThreadSubscription();
+        }
+
         const resourceId = this.resourceId;
 
         const fullStream = ReadableStream.from((async function* () {
@@ -323,6 +393,14 @@ function installStream(harness: any) {
             // would hang forever after `tool-call-suspended`. Workaround:
             // explicitly break on suspend and resubscribe with a fresh
             // `seenRunIds`.
+            //
+            // `finish` is always terminal within a run — harness's
+            // processStream breaks on whichever of {finish, tool-call-suspended,
+            // error, abort} arrives first, so we can't see `finish` after
+            // a suspension in the same run. Earlier this guard checked
+            // `displayState.pendingSuspension`, but that snapshot races
+            // with the harness's `emit("agent_start")` on resume and could
+            // leave the loop waiting forever for a chunk that never comes.
             while (true) {
                 const sub = await agent.subscribeToThread({ resourceId, threadId });
                 let terminal = false;
@@ -333,13 +411,12 @@ function installStream(harness: any) {
                         const t = (chunk as { type?: string })?.type;
                         if (t === 'error' || t === 'abort') { terminal = true; break; }
                         if (t === 'tool-call-suspended') { suspended = true; break; }
-                        if (t === 'finish' && !getDisplayState().pendingSuspension) { terminal = true; break; }
+                        if (t === 'finish') { terminal = true; break; }
                     }
                 } finally {
                     sub.unsubscribe();
                 }
-                if (terminal) return;
-                if (!suspended && !getDisplayState().pendingSuspension) return;
+                if (terminal || !suspended) return;
             }
         })());
 

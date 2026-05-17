@@ -78,8 +78,14 @@ export const chatHandler = (code: ShmastraCode): Handler => {
     });
 
     const handleAbort = () => {
-      const pending = code.harness.getDisplayState().pendingSuspension;
-      if (pending) {
+      // Use the real `pendingSuspensionRunId` instead of
+      // `displayState.pendingSuspension`. The displayState snapshot can stay
+      // truthy across resumes (it races with `emit("agent_start")`), which
+      // would route abort into the wrong branch — `respondToToolSuspension`
+      // no-ops when there's no live suspension, so neither `agent_end` nor
+      // the apply_changes flush would fire.
+      const pendingRunId = (code.harness as unknown as { pendingSuspensionRunId: string | null }).pendingSuspensionRunId;
+      if (pendingRunId) {
         code.harness.respondToToolSuspension({ resumeData: { cancelled: true } })
             .catch(err => console.error("respondToToolSuspension failed", err));
       } else {

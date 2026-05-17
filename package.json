@@ -14,6 +14,7 @@
     "init-workdir": "npx tsx scripts/init-workdir.ts",
     "install-browsers": "npx tsx scripts/install-browsers.ts",
     "dry-run": "npx tsx scripts/dry-run.ts",
+    "test:suspension": "npx tsx scripts/test-suspension-flow.ts",
     "update-lockfile": "npm install --package-lock-only",
     "prepare": "husky"
   },
