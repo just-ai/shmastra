@@ -7,7 +7,7 @@ import {answerHandler} from "./answer";
 import {staticHandler} from "./static";
 import {threadHandler} from "./thread";
 import {envVarsHandler} from "./vars";
-import {uploadHandler, getFileHandler, uploadOpenapi, getFileOpenapi} from "./files";
+import {uploadHandler, getFileHandler} from "./files";
 import {injectScript} from "./script";
 import {handleStream} from "./stream";
 import {chatHandler} from "./chat";
