@@ -9,6 +9,13 @@ const MODEL_MIGRATIONS: Record<string, string> = {
     'anthropic/claude-opus-4-6': 'anthropic/claude-opus-4-7',
 };
 
+const ALLOWED_IMAGE_TYPES = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+]);
+
 const resolveModelId = async (code: ShmastraCode, requestedModelId: string): Promise<string> => {
     const target = MODEL_MIGRATIONS[requestedModelId];
     if (!target) return requestedModelId;
@@ -37,7 +44,7 @@ export const chatHandler = (code: ShmastraCode): Handler => {
         .filter((p: {filename?: string}) => p.filename);
 
     const images = files
-        .filter(p => p.mediaType.startsWith("image/"));
+        .filter(p => ALLOWED_IMAGE_TYPES.has(p.mediaType));
 
     const imageUrls = await Promise
         .all(images.map(img => resolveFileUrl(img.url, img.mediaType)));
