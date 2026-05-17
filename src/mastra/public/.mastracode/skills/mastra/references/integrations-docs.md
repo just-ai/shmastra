@@ -15,7 +15,7 @@ Call `search_toolkits` tool to check if some third-party service provides suitab
 4. If toolkit is connected already - you can use suitable tools from it in your agents via `getConnectedTools()`:
 
 ```typescript
-import {getToolkitTools} from "../shmastra/connections";
+import {getConnectedTools} from "../shmastra/connections";
 
 const agent = new Agent({
   // ...
