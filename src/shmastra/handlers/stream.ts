@@ -26,10 +26,23 @@ export const handleStream: Middleware = async (c, next) => {
 
         if (Array.isArray(body.messages)) {
             for (const m of body.messages) {
-                if (Array.isArray(m.content)) {
-                    m.content = m.content.filter((p: any) =>
-                        p.type !== 'image' || (p.mimeType && ALLOWED_IMAGE_TYPES.has(p.mimeType))
-                    )
+                if (!Array.isArray(m.content)) continue
+                const kept: any[] = []
+                const attachmentTags: string[] = []
+                for (const p of m.content) {
+                    if (p.type !== 'image' || (p.mimeType && ALLOWED_IMAGE_TYPES.has(p.mimeType))) {
+                        kept.push(p)
+                        continue
+                    }
+                    const name = typeof p.image === 'string' ? p.image.split('/').pop() : ''
+                    if (name) attachmentTags.push(`<attachment name=${name}>\n\n</attachment>`)
+                }
+                if (!attachmentTags.length) {
+                    m.content = kept
+                } else if (!kept.length) {
+                    m.content = attachmentTags.join('\n')
+                } else {
+                    m.content = [...kept, { type: 'text', text: attachmentTags.join('\n') }]
                 }
             }
 
