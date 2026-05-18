@@ -262,7 +262,7 @@ function diffWalk(
                 changed.push(relPath)
             } else if (
                 srcStat.size !== dstStat.size ||
-                Math.round(srcStat.mtimeMs) !== Math.round(dstStat.mtimeMs)
+                srcStat.mtimeMs > (dstStat.mtimeMs + 1000)
             ) {
                 changed.push(relPath)
             }
